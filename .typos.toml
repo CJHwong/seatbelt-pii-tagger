@@ -1,0 +1,15 @@
+[default.extend-words]
+# OPF is the OpenAI Privacy Filter, and `thr` marks the per-label thresholds in a system name.
+OPF = "OPF"
+opf = "opf"
+thr = "thr"
+# The Weibo NER tag PER.NAM, and the licence id cc-by-nc-nd.
+NAM = "NAM"
+nd = "nd"
+alikes = "alikes"
+mis = "mis"
+ba = "ba"
+
+[files]
+# Datasets and evaluation sets: their text is data, and a spelling fix would change the gold.
+extend-exclude = ["*.jsonl"]

@@ -1,0 +1,92 @@
+{
+ "account_number": {
+  "threshold": 0.0,
+  "dev_f1": 0.9760817966039803,
+  "dev_f1_at_0": 0.9547547460834036
+ },
+ "address": {
+  "threshold": 0.0,
+  "dev_f1": 0.9858892490568812,
+  "dev_f1_at_0": 0.9856636280005399
+ },
+ "company_id": {
+  "threshold": 0.0,
+  "dev_f1": 1.0,
+  "dev_f1_at_0": 1.0
+ },
+ "date": {
+  "threshold": 0.0,
+  "dev_f1": 0.9898323715306403,
+  "dev_f1_at_0": 0.9499739447628973
+ },
+ "driver_license": {
+  "threshold": 0.0,
+  "dev_f1": 0.8564356435643564,
+  "dev_f1_at_0": 0.8239866740699611
+ },
+ "email": {
+  "threshold": 0.0,
+  "dev_f1": 0.9950106669038824,
+  "dev_f1_at_0": 0.9950106669038824
+ },
+ "household_no": {
+  "threshold": 0.0,
+  "dev_f1": 1.0,
+  "dev_f1_at_0": 1.0
+ },
+ "license_plate": {
+  "threshold": 0.0,
+  "dev_f1": 0.9337349397590361,
+  "dev_f1_at_0": 0.7376311844077961
+ },
+ "medical_license": {
+  "threshold": 0.0,
+  "dev_f1": 1.0,
+  "dev_f1_at_0": 0.988235294117647
+ },
+ "military_id": {
+  "threshold": 0.0,
+  "dev_f1": 1.0,
+  "dev_f1_at_0": 0.9770992366412213
+ },
+ "national_id": {
+  "threshold": 0.0,
+  "dev_f1": 0.8653031140593329,
+  "dev_f1_at_0": 0.8064489030840635
+ },
+ "nhi_card": {
+  "threshold": 0.0,
+  "dev_f1": 1.0,
+  "dev_f1_at_0": 1.0
+ },
+ "passport": {
+  "threshold": 0.0,
+  "dev_f1": 0.957972805933251,
+  "dev_f1_at_0": 0.914385556202679
+ },
+ "person": {
+  "threshold": 0.0,
+  "dev_f1": 0.9763775036645135,
+  "dev_f1_at_0": 0.9763775036645135
+ },
+ "phone": {
+  "threshold": 0.0,
+  "dev_f1": 0.9920091324200913,
+  "dev_f1_at_0": 0.987844681652119
+ },
+ "secret": {
+  "threshold": 0.0,
+  "dev_f1": 0.9761318866426342,
+  "dev_f1_at_0": 0.9761318866426342
+ },
+ "url": {
+  "threshold": 0.5,
+  "dev_f1": 0.9886964950230988,
+  "dev_f1_at_0": 0.9860623642050474
+ },
+ "username": {
+  "threshold": 0.5,
+  "dev_f1": 0.9662090813093981,
+  "dev_f1_at_0": 0.9635796045785641
+ }
+}

@@ -1,0 +1,9 @@
+# The code is written at 120 columns.
+line-length = 120
+
+# The scripts import their siblings through sys.path, so these folders hold first-party modules.
+src = [
+    ".", "scripts", "benchmark", "blind", "data/synthetic/llm_social", "data/synthetic/llm_devwork",
+    "data/synthetic/llm_agentwork", "experiments/compare", "experiments/export", "experiments/first_run",
+    "experiments/vocab_prune",
+]

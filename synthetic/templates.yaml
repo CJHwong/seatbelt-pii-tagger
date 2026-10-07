@@ -1,0 +1,181 @@
+# Traditional Chinese templates for the synthetic generator. Read by scripts/synthesize.py.
+#
+# train and heldout use disjoint scenarios. heldout is the clean Traditional test set
+# and must never feed training. Syntax is in scripts/synth_lib.py:
+#   [a|b]   pick one variant       {slot}   fill a slot
+# Labelled slots (they produce a span):
+#   person email mobile landline address dob personal_url bank_account credit_card
+#   password api_key national_id passport license_plate line_id ptt_id ig_handle
+#   nhi_card company_id driver_license medical_license military_id household_no
+# Public slots (text only, trained as not-PII):
+#   store landmark landmark_address hotline org_email celebrity other_date city
+#   public_url amount product time bank_name hospital school
+
+train:
+  # LINE and messenger chats
+  - "[嗨|哈囉|安安]，我是{person}，[上次|昨天]在{store}遇到的那個。我的LINE ID是{line_id}，[有空再聊|再約吃飯]～"
+  - "{person}：[明天|週六]幾點到？\n我：{time}左右，到了打給你，我手機{mobile}"
+  - "[老闆|店長]你好，我想訂{product}，收件人{person}，電話{mobile}，地址{address}，謝謝！"
+  - "欸我換手機號碼了，新的是{mobile}，[舊的|原本那支]不要打了喔 by {person}"
+  - "[買家|賣家]{person}您好，匯款帳號是{bank_name}（{bank_code}）{bank_account}，匯完麻煩傳末五碼給我。"
+  - "小姐您好，我是{person}，想問{product}還有貨嗎？可以寄到{address}嗎？我的LINE：{line_id}"
+  - "我ptt帳號{ptt_id}，站內信給我就好，[不要|別]私訊臉書。"
+  - "[學長|學姐]，這是我的IG {ig_handle}，[有照片再標我|追蹤一下]！"
+  - "{person}的生日是{dob}，[我們|大家]那天[幫他|一起]慶生吧！"
+  - "[剛剛|今天]在{landmark}附近看到{celebrity}本人！[超帥|好瘦]，可惜沒拍到照片。"
+  # email
+  - "{person} 您好：\n\n感謝您申請本公司帳戶，您的會員帳號為 {line_id}，預設密碼為 {password}，請於首次登入後立即變更。\n\n{store} 客服中心 敬上"
+  - "Hi {person},\n\n我們已收到您的履歷。面試時間為{other_date} {time}，地點在{address}。如需改期，請回信至{email}或來電{landline}。\n\nHR {person}"
+  - "主旨：[報價單|訂單確認]\n{person} 經理您好，附件為報價單，貴公司統編{company_id}，發票將寄至{address}，聯絡電話{landline}。"
+  - "寄件者：{email}\n收件者：{email}\n\n{person}，這是上次說的API金鑰：{api_key}，[不要外流|用完記得刪掉]。"
+  - "您好，本信件由系統自動發送，請勿直接回覆。如有問題請洽{org_email}或撥打客服專線{hotline}。"
+  - "親愛的{person}，您的{product}已於{other_date}出貨，追蹤資訊請至{public_url}查詢。"
+  # forms
+  - "姓名：{person}\n身分證字號：{national_id}\n出生日期：{dob}\n手機：{mobile}\n地址：{address}\nE-mail：{email}"
+  - "【會員資料】\n會員姓名：{person}\n生日：{dob}\n聯絡電話：{mobile}\n電子信箱：{email}"
+  - "申請人{person}（身分證{national_id}），戶籍地址{address}，戶號{household_no}，申請[戶籍謄本|印鑑證明]一份。"
+  - "緊急聯絡人：{person}，關係：[母親|父親|配偶|兄弟姊妹]，電話：{mobile}"
+  - "扣款帳戶：{bank_name} 帳號{bank_account}\n戶名：{person}"
+  - "信用卡號：{credit_card}\n持卡人：{person}\n[帳單地址|寄送地址]：{address}"
+  - "車主{person}，車牌{license_plate}，駕照號碼{driver_license}，聯絡電話{mobile}。"
+  - "護照號碼：{passport}\n英文姓名：{person}\n出生日期：{dob}"
+  - "健保卡號{nhi_card}，被保險人{person}，身分證字號{national_id}。"
+  - "役別：[常備役|替代役|志願役]\n軍人身分證號：{military_id}\n姓名：{person}\n通訊處：{address}"
+  - "醫師{person}，證書字號{medical_license}，執業場所{hospital}。"
+  # customer service
+  - "客服：您好，請問怎麼稱呼？\n客戶：我姓{surname}，{person}。\n客服：請提供您的手機號碼。\n客戶：{mobile}。"
+  - "客服人員：為了確認身分，請告訴我您身分證後四碼跟生日。\n客戶：身分證{national_id}，生日{dob}。"
+  - "您好，這裡是{store}客服，您的訂單已取消，退款將退回您的{bank_name}帳戶{bank_account}，約3到5個工作天。"
+  - "[感謝您|謝謝您]的來電，如需再次查詢請撥{hotline}，服務時間為週一至週五{time}。"
+  - "客訴內容：{person}反映外送員於{other_date}晚上將餐點送錯地址，正確地址為{address}，聯絡電話{mobile}。"
+  # rental and property
+  - "出租人：{person}\n承租人：{person}（身分證{national_id}）\n租賃標的：{address}\n租金每月{amount}元，匯入{bank_name}帳號{bank_account}。"
+  - "房東您好，我是想看房的{person}，這週{other_date}可以嗎？我的電話{mobile}。"
+  - "管委會公告：{landmark_address}大樓地下室停車場於{other_date}進行消防檢查，如有疑問請洽管理室{landline}。"
+  - "{person}您好，您承租的{address}本期管理費尚未繳納，請於{other_date}前完成繳費。"
+  # medical
+  - "病患姓名：{person}　病歷號碼：{patient_id}\n出生日期：{dob}\n主治醫師：{person}（{medical_license}）\n聯絡電話：{mobile}"
+  - "{person}您好，您在{hospital}的[門診|復健|健檢]預約為{other_date} {time}，請攜帶健保卡（卡號{nhi_card}）報到。"
+  - "轉診單\n病人：{person}　身分證：{national_id}\n轉診醫師：{person}，醫師證書{medical_license}"
+  - "[衛教單|注意事項]：服藥期間請勿飲酒，如有不適請撥{hospital}服務專線{hotline}。"
+  # banking and finance
+  - "【{bank_name}】親愛的客戶您好，您尾數{card_tail}的信用卡於{other_date}消費{amount}元。如非本人交易請撥{hotline}。"
+  - "轉帳明細\n轉出帳號：{bank_account}\n轉入帳號：{bank_account}\n戶名：{person}\n金額：{amount}"
+  - "理專{person}您好，我想[贖回|申購]基金，我的帳戶是{bank_account}，身分證字號{national_id}，麻煩回電{mobile}。"
+  - "保險理賠申請：被保險人{person}，出生{dob}，事故日期{other_date}，理賠金請匯入{bank_account}。"
+  # HR and workplace
+  - "新進員工{person}報到資料：身分證{national_id}，生日{dob}，戶籍地{address}，薪轉帳戶{bank_account}。"
+  - "各位同仁好，我是新來的{person}，分機{extension}，手機{mobile}，[請多指教|有事可以找我]！"
+  - "會議紀錄\n時間：{other_date} {time}\n出席：{person}、{person}、{person}\n決議：{person}負責聯繫廠商（{store}，統編{company_id}）。"
+  - "離職交接：{person}的公司信箱{email}將於{other_date}停用，系統密碼{password}已交由IT重設。"
+  - "[公司|本公司]地址：{landmark_address}，總機{hotline}，統一編號{company_id}。"
+  # delivery and e-commerce
+  - "取件人：{person}\n取件門市：{store}\n手機末三碼：{phone_tail}"
+  - "宅配單\n收件人：{person}\n收件地址：{address}\n收件電話：{mobile}\n寄件人：{store}"
+  - "您在{store}訂購的{product}已送達，取件驗證碼{otp}，請於7天內取貨。"
+  - "{person}，你網拍帳號{ig_handle}被盜了嗎？我收到奇怪的私訊，叫我匯款到{bank_account}。"
+  # government and public services
+  - "{person}君您好，您的車輛（車牌{license_plate}）於{other_date}在{city}違規停車，請於期限內繳納罰鍰。"
+  - "[地價稅|房屋稅]繳款通知\n納稅義務人：{person}\n課稅地址：{address}\n身分證字號：{national_id}"
+  - "入出境申請：申請人{person}，護照{passport}，出生{dob}，[在台|居留]地址{address}。"
+  - "{city}市政府提醒：詐騙猖獗，[接到可疑電話|收到可疑簡訊]請撥{hotline}查證。"
+  - "[如需協助|有任何問題]，請洽{city}區公所，地址{landmark_address}，電話{hotline}，或寄信至{org_email}。"
+  # English-mixed
+  - "Please contact {person} at {email} or {mobile}. 住址：{address}"
+  - "我的 Instagram 是 {ig_handle}，blog 在 {personal_url}，歡迎來逛～"
+  - "Name: {person}\nDOB: {dob}\nID No.: {national_id}\nPassport: {passport}"
+  - "[網站|官網]：{public_url}\n客服信箱：{org_email}\n客服電話：{hotline}"
+  # hard negatives: public entities only
+  - "[今天|週末]去{landmark}走走，順便在{store}買了{product}，人超多。"
+  - "{celebrity}昨天在{landmark}辦簽名會，粉絲從{time}就開始排隊。"
+  - "台北市民當家熱線{hotline}，[全年無休|24小時服務]。"
+  - "新聞稿：{store}將於{other_date}在{landmark_address}開設旗艦店，媒體聯絡信箱{org_email}。"
+  - "推薦{city}的{store}，[牛肉麵|滷肉飯|小籠包]真的好吃，就在{landmark}旁邊。"
+  - "{celebrity}的新專輯{other_date}上市，預購請至{public_url}。"
+
+  # household numbers in varied contexts
+  - "戶口名簿影本\n戶長：{person}　戶號：{household_no}\n住址：{address}"
+  - "[請問|想問]辦理遷入需要什麼？我的戶號是{household_no}，戶長是我[爸|媽|阿公]{person}。"
+  - "{city}戶政事務所通知：{person}君（戶號{household_no}）之[分戶|遷出|更正]申請已核准，請於{other_date}前攜帶印章辦理。"
+  - "戶籍謄本申請書\n申請人：{person}\n身分證統一編號：{national_id}\n戶號：{household_no}\n申請份數：[1|2|3]份"
+  - "低收入戶申請資料：申請人{person}，戶號{household_no}，[家庭成員|同戶人口][3|4|5]人，聯絡電話{mobile}。"
+  - "欸我要幫阿嬤辦[印鑑證明|戶籍謄本]，戶號{household_no}寫這樣對嗎？"
+  - "[選舉人|兵役]名冊核對：{person}，戶號{household_no}，戶籍{address}。"
+  - "[里長|里幹事]您好，{address}這戶的戶號是{household_no}嗎？住戶{person}說通知單寄錯了。"
+  # military IDs in varied contexts, often next to a different national ID
+  - "國軍[退除役官兵|後備軍人]輔導資料\n姓名：{person}\n軍人身分證：{military_id}\n國民身分證：{national_id}"
+  - "兵籍號碼{military_id}，{person}上兵，[請假|外宿]申請核准，返營時間{other_date} {time}。"
+  - "退伍令影本：{person}，軍人身分證號{military_id}，[陸軍|海軍|空軍]{other_date}退伍。"
+  - "[學長|學弟]你的軍人證號是{military_id}對吧？[人事官|輔導長]在問，快回。"
+  - "{person}（軍證{military_id}）申請[眷舍|營區會客]，眷屬{person}，電話{mobile}。"
+  - "後備軍人教育召集令\n應召員：{person}\n軍人身分證號碼：{military_id}\n報到日期：{other_date}\n報到地點：{landmark}"
+  - "醫務所就診紀錄：官兵{person}，軍人身分證{military_id}，主訴[腳踝扭傷|發燒|腰痛]。"
+  - "志願役[士官|軍官]{person}，兵籍號{military_id}，[加給|薪餉]匯入{bank_name}帳戶{bank_account}。"
+  # NHI card numbers in varied contexts, often next to a national ID
+  - "[掛號|報到]請出示健保卡，{person}的卡號是{nhi_card}，對嗎？"
+  - "健保IC卡[遺失|毀損]補發申請\n姓名：{person}　身分證字號：{national_id}\n原卡號：{nhi_card}\n寄送地址：{address}"
+  - "幫我媽{person}線上[掛號|預約疫苗]，健保卡號{nhi_card}，出生{dob}。"
+  - "藥局取藥：{person}，健保卡[號碼|卡號]{nhi_card}，連續處方第[2|3]次。"
+  - "{hospital}住院同意書：病人{person}，健保卡{nhi_card}，身分證{national_id}，緊急聯絡人{person} {mobile}。"
+  - "Q：健保卡號是哪一串？A：卡片正面那12碼，像我的是{nhi_card}，不是身分證{national_id}喔。"
+  - "牙醫診所預約：{person}，{other_date} {time}，健保卡{nhi_card}，電話{mobile}。"
+  - "[員工|眷屬]加保資料：被保險人{person}，健保卡號{nhi_card}，依附眷屬{person}。"
+  # hard negatives: common words, letter closings and numerals that are not names
+  - "感謝您的來信，相關事宜已轉交承辦單位處理。\n順頌 商祺\n{store}客服中心"
+  - "[老師|大家]辛苦了！[下週|本週]{other_date}的活動改到{landmark}，詳情見{public_url}。"
+  - "透過仲介[介紹|推薦]看了{city}的房子，[優惠|折扣]後總價{amount}萬，仲介費另計。"
+  - "收據：新台幣[壹|貳|參|伍]萬[伍|參|壹]仟元整，[訂金|租金]，{other_date}收訖。"
+  - "敬祝 [平安喜樂|身體健康|事業順利]\n此致 敬禮\n{store} 敬上"
+  - "[那位|隔壁的]太太說{store}今天有優惠，[阿姨|阿伯]們一早就去排隊了。"
+  - "本[週|月]會員優惠：{product}[八折|買一送一]，活動至{other_date}止，詳洽{hotline}。"
+  - "[謝謝|感謝]大家的介紹，{celebrity}的演唱會{other_date}在{landmark}，辛苦排隊的朋友加油！"
+
+  # private URLs: profiles, blogs and personal domains
+  - "[履歷|作品集]：{person}\nEmail：{email}\n個人網站：{personal_url}"
+  - "我最近把[旅遊|育兒|理財]心得寫在部落格 {personal_url}，有興趣可以看看～"
+  - "[面試官您好|您好]，附上我的 LinkedIn {personal_url}，再麻煩您參考。{person} 敬上"
+  - "{person}的[FB|臉書]是 {personal_url}，你加他就知道了。"
+  - "[接案|設計]聯絡：{person}　電話{mobile}　作品：{personal_url}"
+  - "這是我的 GitHub Pages：{personal_url}，[專案|作品]都放在上面。"
+heldout:
+  # police and incident reports
+  - "報案筆錄\n報案人：{person}，出生{dob}，身分證{national_id}，住{address}，電話{mobile}。\n報案人稱：{other_date}於{city}遭竊機車一輛，車牌{license_plate}。"
+  - "目擊證人{person}（連絡電話{landline}）表示，肇事車輛車牌為{license_plate}，駕駛人駕照{driver_license}。"
+  # school
+  - "[班級|家長]通訊錄\n學生：{person}　家長：{person}\n家長手機：{mobile}　LINE：{line_id}\n住址：{address}"
+  - "{person}家長您好，{school}將於{other_date}舉辦親師座談，如無法出席請回覆導師信箱{email}。"
+  # customs and immigration
+  - "旅客入境申報單\n姓名：{person}　護照號碼：{passport}\n出生日期：{dob}\n在台聯絡地址：{address}\n聯絡電話：{mobile}"
+  - "外籍配偶{person}申請居留，護照{passport}，配偶{person}（身分證{national_id}），戶號{household_no}。"
+  # tax filing
+  - "綜合所得稅申報\n納稅義務人：{person}　身分證：{national_id}\n配偶：{person}　出生：{dob}\n退稅帳戶：{bank_name} {bank_account}"
+  - "扶養親屬：{person}，稱謂[子女|父母]，出生{dob}，身分證{national_id}。"
+  # pharmacy
+  - "處方箋\n病人：{person}　健保卡號：{nhi_card}\n開立醫師：{person}（{medical_license}）\n領藥藥局：{store}"
+  - "藥師提醒{person}：慢性處方箋第二次領藥日為{other_date}，請攜帶健保卡。"
+  # gym and clubs
+  - "健身房會員{person}，會員卡綁定信用卡{credit_card}，每月自動扣款{amount}元。緊急聯絡人{person} {mobile}。"
+  - "登山社報名：{person}，{dob}生，身分證{national_id}，緊急聯絡人電話{mobile}，保險受益人{person}。"
+  # military
+  - "{person}下士，軍人身分證號{military_id}，[休假|返營]期間聯絡電話{mobile}，住址{address}。"
+  # online forums and accounts
+  - "[徵|售]{product}，意者站內信{ptt_id}，或加LINE {line_id}，面交地點{landmark}。"
+  - "帳號被盜求救！我的IG是{ig_handle}，綁定的信箱{email}，密碼好像被改成{password}了……"
+  - "工程師交接筆記：正式環境API Key {api_key}，後台網址{public_url}，負責人{person} {email}。"
+  # business
+  - "{store}股份有限公司，統一編號{company_id}，負責人{person}，公司地址{address}，電話{landline}。"
+  - "發票抬頭：{store}\n統編：{company_id}\n寄送：{person} 收，{address}"
+  # wedding and events
+  - "喜宴座位表 第{table_no}桌：{person}、{person}、{person}、{person}"
+  - "婚禮籌備聯絡人：新郎{person} {mobile}，新娘{person} {mobile}，婚宴會館{store}。"
+  # hard negatives
+  - "{celebrity}今晚在{landmark}開演唱會，[交通管制|接駁車]資訊請見{public_url}。"
+  - "反詐騙諮詢專線{hotline}，[有疑問|接到可疑電話]就撥打。"
+  - "{store}{city}店[開幕|週年慶]，地址{landmark_address}，洽詢{org_email}。"
+  - "[颱風|豪雨]來襲，{city}停班停課資訊請以{public_url}公告為準。"
+  # court, long-term care and military court
+  - "支付命令送達證書：債務人{person}，戶籍{address}，戶號{household_no}，送達日期{other_date}。"
+  - "長照服務申請：個案{person}，健保卡號{nhi_card}，主要照顧者{person}，電話{mobile}。"
+  - "軍事法院起訴書：被告{person}，軍人身分證{military_id}，現役[陸軍|海軍]，戶籍{address}。"
+  - "年終晚會抽獎：頭獎{product}，由{celebrity}頒發，辛苦各位同仁。\n順頌 時祺"
+  - "同學會名單：{person}，現居{city}，個人頁面{personal_url}，手機{mobile}。"

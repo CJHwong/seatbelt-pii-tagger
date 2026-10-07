@@ -1,0 +1,26 @@
+# Datasets stay out; the briefs and scripts of the LLM-written sets stay in.
+data/**
+!data/synthetic/
+!data/synthetic/llm_social/
+!data/synthetic/llm_devwork/
+!data/synthetic/llm_agentwork/
+!data/synthetic/llm_*/BRIEFING.md
+!data/synthetic/llm_*/prepare.py
+!data/synthetic/llm_*/test_prepare.py
+!data/synthetic/llm_social/near_duplicates.py
+!data/synthetic/llm_social/validate.py
+
+# Checkpoints, builds, predictions and scores. The release table stays in.
+experiments/first_run/runs/
+experiments/vocab_prune/build*/
+experiments/export/build/
+experiments/compare/runs/**
+!experiments/compare/runs/
+!experiments/compare/runs/tables.md
+*.pt
+*.log
+
+__pycache__/
+*.pyc
+.venv/
+.ruff_cache/

@@ -1,0 +1,49 @@
+seatbelt-pii-tagger
+
+This model is licensed under the Apache License, Version 2.0.
+
+It includes or derives from the following works.
+
+Base model and tokenizer
+------------------------
+microsoft/Multilingual-MiniLM-L12-H384
+  MIT License, Copyright (c) Microsoft Corporation
+  https://huggingface.co/microsoft/Multilingual-MiniLM-L12-H384
+  Layers 0 to 5 kept; vocabulary pruned from 250,037 to 64,000 pieces.
+XLM-R SentencePiece tokenizer (fairseq)
+  MIT License, Copyright (c) Facebook, Inc. and its affiliates
+  https://github.com/facebookresearch/fairseq
+
+Training data
+-------------
+nvidia/Nemotron-PII
+  NVIDIA Corporation, CC BY 4.0
+  https://huggingface.co/datasets/nvidia/Nemotron-PII
+  Relabelled to 18 types.
+ai4privacy/pii-masking-openpii-1.5m
+  Ai4Privacy / Ai Suisse SA, CC BY 4.0
+  https://huggingface.co/datasets/ai4privacy/pii-masking-openpii-1.5m
+  Relabelled and filtered to English and Chinese scripts.
+Wismut/nym-pii-multilingual-data
+  Wismut, MIT
+  https://huggingface.co/datasets/Wismut/nym-pii-multilingual-data
+  Relabelled and filtered.
+gretelai/synthetic_pii_finance_multilingual
+  Gretel, Apache 2.0
+  https://huggingface.co/datasets/gretelai/synthetic_pii_finance_multilingual
+gretelai/gretel-pii-masking-en-v1
+  Gretel, Apache 2.0
+  https://huggingface.co/datasets/gretelai/gretel-pii-masking-en-v1
+Secret patterns used to generate training strings
+  gitleaks (MIT, Zachary Rice), betterleaks (MIT), microsoft/security-utilities (MIT),
+  Nosey Parker (Apache 2.0, Praetorian Security)
+Faker (MIT), for synthetic values.
+
+Lists shipped with the model
+----------------------------
+persons.txt.gz and places.txt.gz come from Wikidata (CC0).
+
+Other
+-----
+Traditional Chinese paragraphs from Wikipedia (wikimedia/wikipedia 20231101.zh, CC BY-SA)
+ranked the vocabulary pieces. No Wikipedia text is in the model.

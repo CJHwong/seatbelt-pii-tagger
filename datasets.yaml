@@ -1,0 +1,550 @@
+# Datasets for training and evaluating seatbelt-pii-tagger.
+#
+# Every entry was read from the source (the dataset card, the licence file, or a
+# direct row count over the data). Where a card contradicts its own data, the note
+# says so and the measured value wins.
+#
+# `rows` is the measured row count. `approx_bytes` is from the Hugging Face
+# datasets-server and is an estimate; scripts/verify_data.py records the real size
+# after download into data/INVENTORY.json.
+#
+# Licences: this file records what the source declares. See the `excluded` section
+# for datasets that are commonly used but cannot be shipped.
+
+data_root_default: data  # relative to the repo root
+
+datasets:
+
+  # ---------------------------------------------------------------- training ---
+
+  - id: nvidia/Nemotron-PII
+    revision: b70ffaf5ff39e079776134c5bf4381f00a9fd1ed
+    role: train
+    licence: cc-by-4.0
+    languages: [en]
+    rows: 200000
+    approx_bytes: 307300000
+    url: https://huggingface.co/datasets/nvidia/Nemotron-PII
+    notes: >
+      Synthetic, generated with NVIDIA NeMo Data Designer, persona-grounded in US
+      Census distributions. Spans are injected during generation, so labels are
+      exact. Card prose says "100,000 records (50k train / 50k test)"; the parquet
+      holds 200,000 (100k train, 100k test). Card says "55+" entity types, the data
+      has exactly 55, and "50+" domains, the data has 58. Card body states "This
+      dataset is ready for commercial use."
+    label_style: "flat snake_case spans with {start, end, label}"
+
+  - id: ai4privacy/pii-masking-openpii-1.5m
+    revision: a785eb528e28be2693c3718a27e066970de5dadb
+    role: train
+    licence: cc-by-4.0
+    languages: [en, fr, de, es, it, nl, pt, zh, ja, ko, ar, hi, id, vi, th, ms, tl]
+    rows: 1636375
+    approx_bytes: 5000000000
+    url: https://huggingface.co/datasets/ai4privacy/pii-masking-openpii-1.5m
+    notes: >
+      LICENCE NUANCE. The YAML frontmatter reads `license: other` with
+      `license_name: cc-by-4.0`, and the repo has NO standalone LICENSE file. The
+      grant exists only as README prose: "Permitted Use: Research, commercial use,
+      redistribution, and modification, subject to attribution requirements under
+      CC-BY-4.0." Copyright Ai Suisse SA, a different entity from Ai4Privacy.
+      The intent is unambiguous but a legal review may want it in writing.
+      This is one of the six datasets named in Desert Ant Redact's
+      THIRD_PARTY_NOTICES.md.
+      HOW IT WAS PRODUCED, the entire disclosure in the Ai4Privacy cards: the 400k
+      set says only "This is synthetic data! Generated using proprietary algorithms
+      - no privacy violations!", and the 500k set says only "created using Llama
+      models (versions 3.1 and 3.3) as part of our pipeline at Ai4Privacy". No
+      prompt, no pipeline stage, no source corpus, no generator detail. The stated
+      framework is p5y, described as awareness, protection, quality assurance.
+      Treat the generation method as undisclosed.
+      DELIBERATELY NOT TAKEN: the sibling release `ai4privacy/pii-masking-openpii-1m`
+      (1,428,143 rows, 23 languages, 4.6 GB). It is a separate release from this one,
+      not a subset, but the two overlap heavily and this 1.5m set is the one Redact
+      itself used. Taking both would have cost another 4.6 GB for near-duplicate
+      content. Say the word if you want it; the fetcher takes it as an --only target
+      once it is added to this manifest.
+    label_style: 19 labels, span `privacy_mask` plus BIO `mbert_token_classes`
+
+  - id: gretelai/synthetic_pii_finance_multilingual
+    revision: 7b844d16738527a04264f50214cb426a4cea0897
+    role: train
+    licence: apache-2.0
+    languages: [en, fr, de, nl, es, it, sv]
+    rows: 55940
+    approx_bytes: 53800000
+    url: https://huggingface.co/datasets/gretelai/synthetic_pii_finance_multilingual
+    notes: >
+      Synthetic, generated with Gretel Navigator. README prose says 55,940 rows;
+      `dataset_info` says 50,346 train plus 5,594 test, which sums to the same.
+      YAML lists 6 languages but the data files also carry Swedish. Named in
+      Redact's THIRD_PARTY_NOTICES.md.
+    label_style: 29 PII types, `pii_spans`
+
+  - id: gretelai/gretel-pii-masking-en-v1
+    revision: e06eb1499ca8d54470f085021cd8e54f9efac7fd
+    role: train
+    licence: apache-2.0
+    languages: [en]
+    rows: 60000
+    approx_bytes: 24400000
+    url: https://huggingface.co/datasets/gretelai/gretel-pii-masking-en-v1
+    notes: Named in Redact's THIRD_PARTY_NOTICES.md as a training dataset.
+
+  - id: joelniklaus/mapa
+    revision: bbb2a0157b760465002fd12a61af81b475cd387a
+    role: train
+    licence: cc-by-4.0
+    languages: [bg, cs, da, de, el, en, es, et, fi, fr, ga, hu, it, lt, lv, mt, nl, pt, ro, sk, sv]
+    rows: 41767
+    approx_bytes: 32700000
+    url: https://huggingface.co/datasets/joelniklaus/mapa
+    notes: >
+      Real text, EUR-Lex legal documents, not synthetic. Only 12 documents (9 Spanish)
+      so the row count is high but the lexical diversity is low. No standalone LICENSE
+      file. Useful as a real-text slice, not as a volume source.
+    label_style: two-level hierarchy, 19 L1 and 117 L2, token level, not BIO
+
+  - id: Wismut/nym-pii-multilingual-data
+    revision: abe23bf08c305f5824b1643dc4f079f06ccb2ad1
+    role: train
+    licence: mit
+    languages: [en, de, fr, es, it, pt, nl, pl, sv, cs, ro, tr, fi, da, el, ru, uk, ja, zh, ko, ar, hi]
+    rows: 805000
+    approx_bytes: null
+    url: https://huggingface.co/datasets/Wismut/nym-pii-multilingual-data
+    notes: >
+      THE ONLY SHIPPABLE DATASET THAT COVERS CJK. Synthetic, LLM templates plus Faker
+      locale fills, seeds 0 to 2. YAML lists 22 languages; README prose says "~23
+      languages and 6 scripts". About 13 percent of rows are PII-free, which is useful
+      as hard negatives. Covers zh and ja and ko, but generic Chinese, not
+      Traditional specifically. No standalone LICENSE file.
+    label_style: 40 entity types, char-offset spans
+
+  - id: E3-JSI/synthetic-multi-pii-ner-v1
+    revision: 2fe1b17ea2d82d80b2570e5c48c416a3b317828f
+    role: train
+    licence: mit
+    languages: [en]
+    rows: 2971
+    approx_bytes: 1200000
+    url: https://huggingface.co/datasets/E3-JSI/synthetic-multi-pii-ner-v1
+    notes: Named in Redact's THIRD_PARTY_NOTICES.md as a training dataset.
+
+  - id: urchade/synthetic-pii-ner-mistral-v1
+    revision: 392d6853aaec28075253565350e0d17b9e0ffc0d
+    role: train
+    licence: apache-2.0
+    languages: [en, fr, it, de, es]
+    rows: null
+    approx_bytes: null
+    url: https://huggingface.co/datasets/urchade/synthetic-pii-ner-mistral-v1
+    notes: >
+      Row count not documented and the HF viewer is unsupported; the repo holds a
+      single data.json. The Hugging Face datasets-server returns HTTP 401 for it, but
+      the repository itself downloads fine (23.3 MB), so it is not actually gated.
+      The training set behind urchade/gliner_multi_pii-v1.
+
+  # -------------------------------------------------------------------- eval ---
+
+  - id: lianghsun/tw-PII-bench
+    revision: 62bdad506803b15e1a4193f4493200ad431b1af7
+    role: eval
+    licence: apache-2.0
+    languages: [zh-Hant]
+    rows: 910
+    approx_bytes: 2200000
+    url: https://huggingface.co/datasets/lianghsun/tw-PII-bench
+    notes: >
+      THE PRIMARY CHINESE EVALUATION SET. Taiwan-specific Traditional Chinese,
+      scenario-based (medical prescriptions, food-delivery complaints, immigration
+      forms, customs declarations, labour and health insurance forms, LINE threads,
+      Dcard posts, rental contracts, tax filings). 7,915 spans, all character offsets
+      verified by slicing. 40 negatives. 8 in-schema categories matching
+      openai/privacy-filter plus 11 Taiwan-specific OOD labels and 5 hard-negative
+      subtypes. 545 spans carry an empty expected_model_label, which appears to mark
+      spans the model is not expected to flag; decide how your scorer treats those.
+      CAVEAT: 125 downloads and 0 likes. No paper. Labels are only as good as their
+      generator, so hand-check a sample.
+    label_style: "spans with {start, end, label, expected_model_label}"
+    splits: [short (310), mid (300), long (300)]
+
+  - id: wan9yu/pii-bench-zh
+    revision: c350b94897af668517ff5de237d89f2ce2eaa6f0
+    role: eval
+    licence: apache-2.0
+    languages: [zh-Hans]
+    rows: 8000
+    approx_bytes: 2700000
+    url: https://huggingface.co/datasets/wan9yu/pii-bench-zh
+    notes: >
+      Simplified Chinese, mainland formats. 23,206 entities, all character offsets
+      verified by slicing, matching the card's claim exactly. Two subsets: `formal`
+      (5,000, registration forms, medical records, delivery orders, contracts) and
+      `chat` (3,000, noisy instant messaging with emoji, informal register and
+      zh/en code-switching). The chat subset is the valuable half.
+      CAVEAT: 262 downloads, 0 likes, no paper.
+    label_style: >
+      entities with {text, type, start, end}. The key is `type`, not `label`.
+      The eight types are person, phone, address, id_number, email, bank_card,
+      passport, license_plate. The card claims real checksum validation for the
+      identifier types, MOD 11-2 for the mainland ID and Luhn for bank cards.
+      That claim was not independently checked.
+
+  - id: ildpil/text-anonymization-benchmark
+    revision: 1f22ce098996054689b5b331fb20b3a74a78e1c5
+    role: eval
+    licence: mit
+    languages: [en]
+    rows: 2208
+    approx_bytes: 7600000
+    url: https://huggingface.co/datasets/ildpil/text-anonymization-benchmark
+    notes: >
+      Real text, European Court of Human Rights judgements, not synthetic. Also known
+      as TAB, published by Norsk Regnesentral, not Google. 1,268 documents, 1,580,410
+      whitespace tokens. THE ONLY DATASET IN THIS MANIFEST WITH A STANDALONE
+      LICENSE.txt FILE. 8 types (PERSON, CODE, LOC, ORG, DEM, DATETIME, QUANTITY,
+      MISC) with two extra axes, identifier_type and confidential_status.
+    label_style: standoff JSON character offsets
+
+  - id: tner/wnut2017
+    revision: 068c8163eee17ea24bdc86211efeaa9001b57c33
+    role: eval
+    licence: other
+    languages: [en]
+    rows: 1287
+    approx_bytes: 1000000
+    url: https://huggingface.co/datasets/tner/wnut2017
+    notes: >
+      Real text: tweets, Reddit, YouTube and StackExchange comments. The test split
+      tests person recall on noisy real English. Its person gold includes public
+      figures, so it gives recall only, never precision. Licence is `other`, so it is
+      scored locally and never trained on or shipped.
+    label_style: "tokens plus integer BIO tags, names in dataset/label.json"
+
+  - id: erhwenkuo/wikinews-zhtw
+    revision: f6782f89259b3451d8a82e1b3a027804204a6dac
+    role: eval
+    licence: cc-by-sa-3.0
+    languages: [zh-Hant]
+    rows: null
+    approx_bytes: 9000000
+    url: https://huggingface.co/datasets/erhwenkuo/wikinews-zhtw
+    notes: >
+      Unlabelled Traditional Chinese news. Under the benchmark guideline almost
+      nothing in news is private PII: public figures, organisations, hotlines. So
+      every flag is a candidate false alarm, and a reviewed sample says which.
+
+  - id: mks-logic/SPY
+    role: eval
+    licence: cc-by-4.0
+    languages: [en]
+    rows: 8688
+    approx_bytes: 90000000
+    url: https://huggingface.co/datasets/mks-logic/SPY
+    notes: >
+      One of the Privacy Filter's reported benchmarks. Synthetic legal questions (4,197)
+      and medical consultations (4,491), stored with placeholders that the repo's SPY.py
+      fills with Faker at load time. experiments/compare/benchmarks.py does not run that
+      remote code: `benchmarks.py build-spy` fills a 1,500-row sample itself, one profile
+      per row as SPY.py does, with Faker 40.40.0 and seed 13, into
+      data/external/SPY/spy_filled_seed13.jsonl. Two deviations from SPY.py: ID_NUM uses
+      only the generators that map to one of our types (ssn, credit card, IBAN, BBAN),
+      and URLs count neither way, because most Faker URLs are shop and company sites.
+      Fetched by its `external:` entry.
+
+  - id: argilla/textcat-tokencat-pii-per-domain
+    role: eval
+    licence: none declared; inherits ai4privacy/pii-masking-200k
+    languages: [en]
+    rows: 2096
+    approx_bytes: 6200000
+    url: https://huggingface.co/datasets/argilla/textcat-tokencat-pii-per-domain
+    notes: >
+      The Argilla PII set that nvidia/gliner-PII reports on. Its creation_script.py takes
+      1% of ai4privacy/pii-masking-200k, so the rows and spans are ai4privacy's, under
+      that set's two-tier licence (see `excluded`). The licence text grants free use to
+      an individual and to anyone "in the stage of assessing Ai4Privacy's suitability",
+      so evaluation by the individual who publishes this model is allowed, and the report
+      may show its scores. Never train on it and never ship it. Recheck the licence before
+      any company use.
+      Fetched by its `external:` entry.
+
+  - id: DataikuNLP/kiji-pii-training-data
+    role: eval
+    licence: apache-2.0
+    languages: [en]
+    rows: 1033
+    url: https://huggingface.co/datasets/DataikuNLP/kiji-pii-training-data
+    notes: >
+      One of the sets the OPF paper (arXiv 2608.02616) reports on. Only the English
+      rows of the test split are scored, report-only, by experiments/compare/published.py.
+      Never trains. Fetched by its `external:` entry.
+
+  - id: MultiCoNER/multiconer_v2
+    role: eval
+    licence: cc-by-4.0
+    languages: [en, zh-Hans]
+    url: https://huggingface.co/datasets/MultiCoNER/multiconer_v2
+    notes: >
+      One of the sets the OPF paper reports on. published.py scores person recall on the
+      en and zh test files over the seven person classes. Never trains. Fetched by its
+      `external:` entry.
+
+  # ------------------------------------------------------------------- gated ---
+
+  - id: lianghsun/tw-PII-chat
+    role: train
+    licence: apache-2.0
+    languages: [zh, en]
+    rows: 183588
+    approx_bytes: null
+    url: https://huggingface.co/datasets/lianghsun/tw-PII-chat
+    gated: manual
+    notes: >
+      TRAP. Companion training corpus by the same author as tw-PII-bench, combining
+      synthetic data with LLM-labelled real zh-TW PDFs. Do NOT train on this and then
+      evaluate on tw-PII-bench: same author, same generator, so the score would
+      measure memorisation. Pick one side. Requires manual approval on Hugging Face
+      before it will download.
+
+# ---------------------------------------------------------------------------
+# DO NOT USE. These are the most-downloaded PII datasets on Hugging Face and the
+# most common trap, because a licence scanner sees a permissive-looking tag and
+# says nothing.
+# ---------------------------------------------------------------------------
+
+# Files the training and evaluation read from outside datasets: above. Each file is pinned by
+# commit and checked by sha256 after download. A git entry without files is cloned whole at
+# its commit. An `optional` entry is fetched only when named with --only.
+external:
+  - name: agent-seatbelt
+    kind: git
+    repo: https://github.com/CJHwong/agent-seatbelt
+    revision: a830e3568886c6acbe2973d7953ffc03ee35b001
+    local_dir: external/agent-seatbelt
+    licence: none declared yet
+    use: the comparison hooks, the rules engine and its secret test suites
+
+  - name: wikipedia-zh-shard
+    kind: hf
+    repo: wikimedia/wikipedia
+    revision: b04c8d1ceb2f5cd4588862100d08de323dccfbaa
+    local_dir: wikimedia/wikipedia
+    files:
+    - path: 20231101.zh/train-00002-of-00006.parquet
+      to: 20231101.zh/train-00002-of-00006.parquet
+      sha256: ec8f6c0dd1418b8fcd454278fb4f2bc7cd0ce8312f29c80b672533942601338f
+    licence: cc-by-sa (see the dataset card)
+    use: Traditional Chinese text that ranks the vocabulary pieces; no text is trained on
+
+  - name: weibo_ner
+    kind: git
+    repo: https://github.com/hltcoe/golden-horse
+    revision: bfcf1e862e656bd6a84f6ed0029dc807d7137484
+    local_dir: external/weibo_ner
+    files:
+    - path: data/weiboNER_2nd_conll.train
+      to: train.conll
+      sha256: 4e8954c54ab33b0afc9a8abb85715c47422645cc6d1b49fdb24540f4a427e997
+    - path: data/weiboNER_2nd_conll.dev
+      to: dev.conll
+      sha256: e72730d83aac680505280b6301c879b3ba470d29ac308979d48cdc58ee4907cc
+    - path: data/weiboNER_2nd_conll.test
+      to: test.conll
+      sha256: faaf6c0ebde5348b935cfd5c89f0f22c9e0779d60667d8b5efbc647b6707d50e
+    licence: cc-by-sa-3.0
+    use: 'eval: Weibo NER test, person recall'
+
+  - name: CredData
+    kind: git
+    repo: https://github.com/Samsung/CredData
+    revision: 81d334cd98186e5cde1679383b868860cf34b17e
+    local_dir: external/CredData
+    licence: apache-2.0 (its LICENSE file)
+    use: 'eval: real source-code lines with and without credentials'
+    after: 'Run `python download_data.py` twice inside the folder, on Linux (its README: some file names
+      are invalid on other systems). The evaluation skips CredData until its data/ folder exists.'
+
+  - name: SPY
+    kind: hf
+    repo: mks-logic/SPY
+    revision: 093be5a0235c9e15bc1c364f10ac48b9563de34c
+    local_dir: external/SPY
+    files:
+    - path: data/medical_consultations_placeholders.jsonl
+      to: medical_consultations_placeholders.jsonl
+      sha256: 230f508921503c1ec6e352c420d639458d89c6cf658b9f0d8ea75bf014c6e15b
+    - path: data/legal_questions_placeholders.jsonl
+      to: legal_questions_placeholders.jsonl
+      sha256: bb1337d1b289e3da63accc032d614330313fd700612792094a482266fcc389d9
+    - path: SPY.py
+      to: SPY.py
+      sha256: dfcaffb309dcd37549e240782cc56ffcc8bad052263533d5b215da0aeabb6032
+    licence: cc-by-4.0
+    use: 'eval: then run `benchmarks.py build-spy` to fill the placeholders'
+
+  - name: argilla-pii
+    kind: hf
+    repo: argilla/textcat-tokencat-pii-per-domain
+    revision: 683954a23877151a1d05e7515d5e6cf87203ffd2
+    local_dir: external/argilla-pii
+    files:
+    - path: data/train-00000-of-00001.parquet
+      to: train.parquet
+      sha256: 439fb5565e8e97b1ec014da498156fa3166140bdb9243dc6f7a9cb5847363cea
+    - path: creation_script.py
+      to: creation_script.py
+      sha256: b7c514e70eae1e831ce9c2126a12d2f99bc821a9928e4dab3ac7ef9bcc69c46a
+    licence: none declared; inherits ai4privacy/pii-masking-200k (see `excluded`)
+    use: eval only; never train on it or ship it
+
+  - name: kiji-pii-training-data
+    kind: hf
+    repo: DataikuNLP/kiji-pii-training-data
+    revision: 0275550f0b1f1b8f2dc9356fd31ac1c788b8228b
+    local_dir: external/kiji-pii-training-data
+    files:
+    - path: data/test-00000-of-00001.parquet
+      to: data/test-00000-of-00001.parquet
+      sha256: 916c63792345bf3c2e0888941b3d14526c43b7c7fe8af60e0d283fed71b1234d
+    licence: apache-2.0
+    use: 'eval: test split'
+
+  - name: multiconer_v2
+    kind: hf
+    repo: MultiCoNER/multiconer_v2
+    revision: 4be2d62c912977ee26ed14d2553a4fe17ca3d980
+    local_dir: external/multiconer_v2
+    files:
+    - path: EN-English/en_test.conll
+      to: EN-English/en_test.conll
+      sha256: be7e85f1542a9643de5f01cc99465ec0cb9d96a20bdc3c58418d391e194aff9a
+    - path: ZH-Chinese/zh_test.conll
+      to: ZH-Chinese/zh_test.conll
+      sha256: c678955f7bfc668989feb89d1a8474123b5e00a61664d327b590b3364356b0e6
+    licence: cc-by-4.0
+    use: 'eval: person recall'
+
+  - name: wikiann
+    kind: hf
+    repo: unimelb-nlp/wikiann
+    revision: f0a3be6dc5564c0cc4150bb660144800a1f539d4
+    local_dir: external/wikiann
+    files:
+    - path: en/test-00000-of-00001.parquet
+      to: en/test-00000-of-00001.parquet
+      sha256: e64d864f75ba40b4265d352fad243fa9bf91716284699103a0f8e4c3610725c0
+    - path: zh/test-00000-of-00001.parquet
+      to: zh/test-00000-of-00001.parquet
+      sha256: 8a7fcb7964e739760fe07069a76945b1d87432c2ef8744cfea65d04b8a8e026e
+    licence: unknown (see `excluded`)
+    use: 'eval: person recall'
+
+  - name: multinerd
+    kind: hf
+    repo: Babelscape/multinerd
+    revision: 2814b78e7af4b5a1f1886fe7ad49632de4d9dd25
+    local_dir: external/multinerd
+    files:
+    - path: test/test_en.jsonl
+      to: test/test_en.jsonl
+      sha256: f89c5544643ec7223ca80c02ac4b50bdc3dab980f2e50d77ca8cae93d86e3428
+    - path: test/test_zh.jsonl
+      to: test/test_zh.jsonl
+      sha256: f547877ae3e986d868534a4db3731229013388102e5a6b5f1b793698499fdd94
+    licence: cc-by-nc-sa-4.0
+    use: 'eval: person recall'
+
+  - name: conll2003
+    kind: hf
+    repo: eriktks/conll2003
+    revision: ce85b39f9dd99f552d0739d456814e95fb6a39b0
+    local_dir: external/conll2003
+    files:
+    - path: conll2003/test/0000.parquet
+      to: conll2003/test/0000.parquet
+      sha256: 14f894263b4ee3563395a57b8ba4cfaabec7db4ea956ba34e2f84a19781cdc43
+    licence: other (see `excluded`)
+    use: 'eval: person recall'
+
+  - name: pii-masking-300k
+    kind: hf
+    repo: ai4privacy/pii-masking-300k
+    revision: c8c77895a005822682b66ab547fc0422579bc1d3
+    local_dir: external/pii-masking-300k
+    files:
+    - path: data/validation/1english_openpii_8k.jsonl
+      to: data/validation/1english_openpii_8k.jsonl
+      sha256: 3112f54972d1a117936b75fa455e41872df36d4a8e7500ac9663e3ee671729e1
+    - path: LICENSE.md
+      to: LICENSE.md
+      sha256: 95e2504e7ccd147c4d37db120641b80b94f3fdf8919cee7275fb8a5f09e93eba
+    licence: other, pointing at license.md; sharing results needs written permission
+    use: eval, local only
+    optional: true
+
+excluded:
+
+  - id: ai4privacy/pii-masking-400k
+    licence: custom, academic and non-commercial only
+    why: >
+      VERIFIED by reading license.md. "Access to this dataset is granted exclusively
+      for academic research and non-commercial purposes." Use beyond that "including
+      any form of redistribution... or the creation and dissemination of derivative
+      works" needs written permission. A trained model is a derivative work. The file
+      also states the data is watermarked and that unauthorised use is traceable.
+      This is why iiiorg/piiranha-v1 carries cc-by-nc-nd-4.0 in prose while its YAML
+      says mit. The prose matches its training data.
+
+  - id: ai4privacy/pii-masking-200k
+    licence: custom, two-tier, corporate licence needed above 3 staff
+    why: >
+      Different licence from the 400k set. Free only for entities with up to 3 staff.
+      Currently carries NO licence field at all in its YAML while the repo still holds
+      the restrictive LICENSE file. Dropping the YAML tag does not drop the licence.
+
+  - id: ai4privacy/pii-masking-300k
+    licence: other, pointing at license.md
+    why: >-
+      YAML reads `license: other` with `license_name: license.md`, so a scanner flags nothing.
+      Its English validation file is scored for local evaluation only, report-only, by
+      experiments/compare/published.py. Fetch it with `fetch_data.py --only pii-masking-300k`.
+      Local only: its licence needs written permission to share results, so the report leaves
+      it out, and the evaluation skips it when the folder is absent.
+
+  - id: Babelscape/multinerd
+    licence: cc-by-nc-sa-4.0
+    why: >-
+      Non-commercial. Covers Chinese, which makes it tempting. Its en and zh test files
+      are scored for local evaluation only, report-only, by published.py.
+
+  - id: Babelscape/wikineural
+    licence: cc-by-nc-sa-4.0
+    why: Non-commercial.
+
+  - id: Universal-NER/Pile-NER-type
+    licence: cc-by-nc-4.0
+    why: >
+      Non-commercial. GLiNER-L is built on it, so any model fine-tuned from
+      GLiNER-L inherits the question.
+
+  - id: eriktks/conll2003
+    licence: other
+    why: >-
+      Licence field is `other` with no resolution. Not usable as declared. Its test
+      split is scored for local evaluation only, report-only, by published.py.
+
+  - id: unimelb-nlp/wikiann
+    licence: unknown
+    why: >-
+      Licence is `unknown`. 173 languages makes it tempting, but nothing is granted. Its
+      en and zh test splits are scored for local evaluation only, report-only, by published.py.
+
+  - id: openai/privacy-filter
+    licence: apache-2.0
+    why: >
+      Not a dataset, listed here to record the decision. Usable as a model, but the
+      release ships no conversion script and never names the checkpoint that was
+      converted, so it cannot be rebuilt from published artifacts. Its decode default
+      is hard BIOES constraints with six transition biases all set to 0.0.

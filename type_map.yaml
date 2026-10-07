@@ -1,0 +1,393 @@
+# Source label -> training kind, per dataset. Read by scripts/build_training_set.py.
+#
+# The 18 types are listed in scripts/prep_lib.py (TYPES).
+# Kinds:
+#   a type name       one of: person email phone address date url account_number secret
+#                     national_id passport license_plate username nhi_card company_id
+#                     driver_license medical_license military_id household_no
+#   person_part       name fragment, joined with adjacent fragments into person
+#   address_strong    street-level part, joined with adjacent parts into address
+#   address_weak      city, state, country, postcode: address only when joined to a strong part
+#   ignore            masked out of the loss. A real identifier the 12 leave out, or a
+#                     label this source cannot split (openpii DATE mixes birth dates in)
+#   outside           trained as not-PII: public or non-identifying
+# A label missing from its dataset's map stops the build.
+#
+# A dataset with `path:` needs no reader in build_training_set.py: the file is JSONL under the
+# repo root, one {"text", "spans": [{start, end, label}], "script"} row per line. Mark it
+# `private: true` when the file stays off the repo; the build then skips it, with a warning,
+# on a machine without it. Your own private rows plug in the same way.
+
+datasets:
+  ai4privacy/pii-masking-openpii-1.5m:
+    include: true
+    languages: [en]  # 30 languages; the target is English and Chinese
+    keep_chinese: true
+    labels:
+      GIVENNAME: person_part
+      SURNAME: person_part
+      DOCTORNAME: person_part
+      EMAIL: email
+      TELEPHONENUM: phone
+      STREET: address_strong
+      BUILDINGNUM: address_strong
+      ZIPCODE: address_weak  # a bare postcode is not a private address
+      CITY: address_weak
+      COUNTRY: address_weak
+      DATE: ignore  # no birth-date label here, so birth dates cannot be split out
+      URL: url
+      ACCOUNTNUM: account_number
+      CREDITCARDNUMBER: account_number
+      PASSWORD: secret
+      IDCARDNUM: national_id
+      SOCIALNUM: national_id
+      PASSPORTNUM: passport
+      USERNAME: username
+      TAXNUM: ignore
+      DRIVERLICENSENUM: driver_license
+      IPV4: ignore
+      MACADDRESS: ignore
+      POLICYNUM: ignore
+      TITLE: outside
+      GENDER: outside
+      SEX: outside
+      AGE: outside
+      TIME: outside
+      ORGANISATION: outside
+      AMOUNT: outside
+      CURRENCY: outside
+      BANKNAME: outside
+      JOBTITLE: outside
+      JOBTYPE: outside
+      TIMEZONE: outside
+      SALARY: outside
+      WEIGHT: outside
+      ALLERGIES: ignore
+      MEDICATION: ignore
+      AIRPORTCODE: outside
+      HOSPITALNAME: outside
+
+  Wismut/nym-pii-multilingual-data:
+    include: true
+    languages: null  # no language field; Latin-script rows are kept whatever the language
+    keep_chinese: true
+    labels:
+      GIVEN_NAME: person_part
+      SURNAME: person_part
+      EMAIL: email
+      PHONE: phone
+      FAX_NUMBER: phone
+      STREET_ADDRESS: address
+      STREET_NAME: address_strong
+      BUILDING_NUMBER: address_strong
+      SECONDARY_ADDRESS: address_strong
+      ZIP_CODE: address_weak  # a bare postcode is not a private address
+      CITY: address_weak
+      STATE: address_weak
+      COUNTRY: address_weak
+      DATE_OF_BIRTH: date
+      DATE: outside  # birth dates carry their own label here, so the rest are not the date type
+      TIME: outside
+      URL: url
+      ACCOUNT_NUMBER: account_number
+      IBAN: account_number
+      CREDIT_DEBIT_CARD: account_number
+      ROUTING_NUMBER: account_number
+      PASSWORD: secret
+      API_KEY: secret
+      PIN: secret
+      CVV: secret
+      SSN: national_id
+      GOVERNMENT_ID: national_id
+      PASSPORT: passport
+      LICENSE_PLATE: license_plate
+      USERNAME: username
+      CUSTOMER_ID: ignore
+      EMPLOYEE_ID: ignore
+      MEDICAL_RECORD_NUMBER: ignore
+      TAX_ID: ignore
+      DRIVERS_LICENSE: driver_license
+      MAC_ADDRESS: ignore
+      COMPANY_NAME: outside
+      SWIFT_BIC: outside
+      GENDER: outside
+      AGE: outside
+
+  nvidia/Nemotron-PII:
+    include: true
+    languages: null  # English only
+    keep_chinese: true
+    labels:
+      first_name: person_part
+      last_name: person_part
+      email: email
+      phone_number: phone
+      fax_number: phone
+      street_address: address
+      postcode: address_weak  # a bare postcode is not a private address
+      city: address_weak
+      state: address_weak
+      county: address_weak
+      country: address_weak
+      date_of_birth: date
+      date: outside
+      date_time: outside
+      time: outside
+      url: url
+      account_number: account_number
+      credit_debit_card: account_number
+      bank_routing_number: account_number
+      password: secret
+      pin: secret
+      api_key: secret
+      http_cookie: secret
+      cvv: secret
+      ssn: national_id
+      national_id: national_id
+      license_plate: license_plate
+      vehicle_identifier: license_plate
+      user_name: username
+      customer_id: ignore
+      employee_id: ignore
+      medical_record_number: ignore
+      health_plan_beneficiary_number: ignore
+      tax_id: ignore
+      certificate_license_number: ignore
+      ipv4: ignore
+      ipv6: ignore
+      mac_address: ignore
+      device_identifier: ignore
+      biometric_identifier: ignore
+      unique_id: ignore
+      coordinate: ignore
+      race_ethnicity: ignore  # sensitive attributes: a different product question, not "clean"
+      religious_belief: ignore
+      political_view: ignore
+      sexuality: ignore
+      blood_type: ignore
+      company_name: outside
+      occupation: outside
+      education_level: outside
+      employment_status: outside
+      language: outside
+      gender: outside
+      age: outside
+      swift_bic: outside
+
+  gretelai/synthetic_pii_finance_multilingual:
+    include: true
+    languages: [English]  # the value of its `language` column
+    keep_chinese: true
+    labels:
+      name: person
+      first_name: person_part
+      last_name: person_part
+      email: email
+      phone_number: phone
+      street_address: address
+      date_of_birth: date
+      date: outside
+      date_time: outside
+      time: outside
+      iban: account_number
+      bban: account_number
+      credit_card_number: account_number
+      bank_routing_number: account_number
+      credit_card_security_code: secret
+      account_pin: secret
+      api_key: secret
+      password: secret
+      ssn: national_id
+      passport_number: passport
+      user_name: username
+      customer_id: ignore
+      employee_id: ignore
+      driver_license_number: driver_license
+      ipv4: ignore
+      ipv6: ignore
+      local_latlng: ignore
+      company: outside
+      swift_bic_code: outside
+
+  gretelai/gretel-pii-masking-en-v1:
+    include: true
+    languages: null  # English only
+    keep_chinese: true
+    offsets: search  # entities carry strings, not offsets; every occurrence is tagged
+    labels:
+      name: person
+      first_name: person_part
+      last_name: person_part
+      email: email
+      phone_number: phone
+      address: address
+      street_address: address
+      postcode: address_weak  # a bare postcode is not a private address
+      city: address_weak
+      state: address_weak
+      country: address_weak
+      date_of_birth: date
+      date: outside
+      date_time: outside
+      time: outside
+      url: url
+      account_number: account_number
+      credit_card_number: account_number
+      bank_routing_number: account_number
+      api_key: secret
+      password: secret
+      pin: secret
+      cvv: secret
+      ssn: national_id
+      national_id: national_id
+      license_plate: license_plate
+      vehicle_identifier: license_plate
+      user_name: username
+      medical_record_number: ignore
+      customer_id: ignore
+      employee_id: ignore
+      ipv4: ignore
+      ipv6: ignore
+      device_identifier: ignore
+      unique_identifier: ignore
+      biometric_identifier: ignore
+      certificate_license_number: ignore
+      health_plan_beneficiary_number: ignore
+      tax_id: ignore
+      coordinate: ignore
+      company_name: outside
+      swift_bic: outside
+
+  synthetic/tw-templates:
+    include: true
+    languages: null
+    keep_chinese: true
+    labels:  # rows already carry final types; identity map
+      person: person
+      email: email
+      phone: phone
+      address: address
+      date: date
+      url: url
+      account_number: account_number
+      secret: secret
+      national_id: national_id
+      passport: passport
+      license_plate: license_plate
+      username: username
+      nhi_card: nhi_card
+      company_id: company_id
+      driver_license: driver_license
+      medical_license: medical_license
+      military_id: military_id
+      household_no: household_no
+      ignore: ignore
+
+  synthetic/rule-secrets:
+    include: true
+    languages: null
+    keep_chinese: true
+    labels:  # scripts/rule_secrets.py writes final types; the rules certify provider values
+      secret: secret
+
+  synthetic/llm-social:
+    include: true
+    languages: null
+    keep_chinese: true
+    labels:  # rows already carry final types; identity map
+      person: person
+      email: email
+      phone: phone
+      address: address
+      date: date
+      url: url
+      account_number: account_number
+      secret: secret
+      national_id: national_id
+      passport: passport
+      license_plate: license_plate
+      username: username
+      nhi_card: nhi_card
+      company_id: company_id
+      driver_license: driver_license
+      medical_license: medical_license
+      military_id: military_id
+      household_no: household_no
+      ignore: ignore
+
+  synthetic/dev-transcripts:  # private coding-agent transcripts, every value faked; not published
+    include: true
+    path: data/dev_transcripts/train.jsonl
+    private: true
+    languages: null
+    keep_chinese: true
+    labels:  # data/dev_transcripts/prepare.py writes final types; identity map
+      person: person
+      email: email
+      phone: phone
+      address: address
+      date: date
+      url: url
+      account_number: account_number
+      secret: secret
+      national_id: national_id
+      passport: passport
+      license_plate: license_plate
+      username: username
+      nhi_card: nhi_card
+      company_id: company_id
+      driver_license: driver_license
+      medical_license: medical_license
+      military_id: military_id
+      household_no: household_no
+      ignore: ignore
+
+  synthetic/llm-devwork:
+    include: true
+    languages: null
+    keep_chinese: true
+    labels:  # data/synthetic/llm_devwork/prepare.py writes final types; identity map
+      person: person
+      email: email
+      phone: phone
+      address: address
+      date: date
+      url: url
+      account_number: account_number
+      secret: secret
+      national_id: national_id
+      passport: passport
+      license_plate: license_plate
+      username: username
+      nhi_card: nhi_card
+      company_id: company_id
+      driver_license: driver_license
+      medical_license: medical_license
+      military_id: military_id
+      household_no: household_no
+      ignore: ignore
+
+  synthetic/llm-agentwork:
+    include: true
+    languages: null
+    keep_chinese: true
+    labels:  # data/synthetic/llm_agentwork/prepare.py writes final types; identity map
+      person: person
+      email: email
+      phone: phone
+      address: address
+      date: date
+      url: url
+      account_number: account_number
+      secret: secret
+      national_id: national_id
+      passport: passport
+      license_plate: license_plate
+      username: username
+      nhi_card: nhi_card
+      company_id: company_id
+      driver_license: driver_license
+      medical_license: medical_license
+      military_id: military_id
+      household_no: household_no
+      ignore: ignore
