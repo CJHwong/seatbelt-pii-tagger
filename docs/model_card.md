@@ -16,7 +16,7 @@ datasets:
 
 # seatbelt-pii-tagger 2026.10: English, Simplified Chinese and Traditional Chinese
 
-A 35M-parameter token tagger that finds personal data and secrets in text. PII means personally identifiable information. It reads English, Simplified Chinese (zh-Hans) and Traditional Chinese (zh-Hant). It targets developer text: prompts, agent replies, tool calls and tool output from coding agents. The shipped file is an int8 ONNX (Open Neural Network Exchange) graph of 35.6 MB that runs on the CPU.
+A 35M-parameter token tagger that finds personal data and secrets in text. PII means personally identifiable information. It reads English, Simplified Chinese (zh-Hans) and Traditional Chinese (zh-Hant). It targets developer text: prompts, agent replies, tool calls and tool output from coding agents. The shipped files are an int8 ONNX (Open Neural Network Exchange) graph of 35.6 MB that runs on the CPU, and an fp16 Core ML package of 69 MB that runs on the Apple Neural Engine.
 
 The [technical report](https://github.com/CJHwong/seatbelt-pii-tagger/blob/main/docs/technical_report.md) holds the method and every result. The [code](https://github.com/CJHwong/seatbelt-pii-tagger) rebuilds the model with `reproduce.sh`.
 
@@ -60,14 +60,18 @@ The model tags 18 types with BIOES (Begin, Inside, End, Single, Outside), so the
 
 The model runs in the `tagger` mode of the [agent-seatbelt](https://github.com/CJHwong/agent-seatbelt) PII hook. The hook splits text into windows of at most 400 characters, runs each window alone, and decodes the token scores into character spans. A rule chain then drops public figures, places, documentation URLs, shared mailboxes and code identifiers.
 
-1. Download this repository into a folder. The folder holds `model.int8.onnx`, `model.onnx`, `tokenizer.json`, `labels.json`, `persons.txt.gz`, `places.txt.gz` and `tagger.json`.
-2. In an agent-seatbelt checkout, start the server with `PII_TAGGER_DIR` set to that folder:
+In an agent-seatbelt checkout, start the server. It downloads the files from this repository on first use:
 
 ```bash
-PII_TAGGER_DIR=~/models/seatbelt-pii-tagger uv run hooks-pii/pii-server.py --mode tagger --port 9123
+uv run hooks-pii/pii-server.py --mode tagger --port 9123
 ```
 
-The server loads `model.int8.onnx`. Set `PII_TAGGER_FP32=1` to load the fp32 graph instead.
+The server picks the network's runtime by itself:
+
+- On Apple Silicon, it runs `model.mlpackage` on the Neural Engine. The package is fp16 and pads each window to 64, 128, 256 or 512 tokens. A window takes 0.4 ms at the median, against 1.4 ms for the int8 graph on the CPU (Apple M5 Pro, 400 benchmark windows, lower is better). Its spans match the PyTorch fp32 network's on all but 93 of 33,479 comparison rows.
+- Elsewhere, or when Core ML fails to load, it runs `model.int8.onnx` on the CPU. Set `PII_TAGGER_FP32=1` to run `model.onnx` instead.
+
+To run your own export, set `PII_TAGGER_DIR` to a folder that holds the same files.
 
 `model.safetensors` and `config.json` hold the same network as PyTorch weights, for `transformers`: `BertForTokenClassification.from_pretrained` loads them, with the 73 label names in the config. The hook does not use them.
 

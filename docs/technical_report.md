@@ -91,7 +91,7 @@ The release file `labels.json` holds the 73 labels in this order. The six Taiwan
 
 **Windowing.** The hook splits text into windows of at most 400 characters and runs each window alone. It then shifts the spans back to their places in the full text.
 
-**Export.** `experiments/export/export_onnx.py` writes the hook files. onnxruntime's BERT optimizer fuses the graph. The int8 file uses dynamic int8 weights.
+**Export.** `experiments/export/export_onnx.py` writes the hook files. onnxruntime's BERT optimizer fuses the graph. The int8 file uses dynamic int8 weights. `experiments/export/export_coreml.py` writes `model.mlpackage` for the Apple Neural Engine: fp16, with one function per padded length (64, 128, 256 and 512 tokens) over one shared copy of the weights. Its chained spans differ from the PyTorch fp32 spans on 93 of 33,479 comparison rows. The int8 graph differs on 1,963.
 
 | file | size | note |
 |---|---|---|

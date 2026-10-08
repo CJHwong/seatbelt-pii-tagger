@@ -53,4 +53,8 @@ done && uv run --script tables.py)
 
 echo "== 7. export"
 (cd experiments/export && uv run --script export_onnx.py release)
+# Core ML runs only on macOS; the hook falls back to the int8 graph without it.
+if [ "$(uname -sm)" = "Darwin arm64" ]; then
+  (cd experiments/export && uv run --script export_coreml.py release)
+fi
 echo "done: experiments/export/build/release, experiments/compare/runs/tables.md"
