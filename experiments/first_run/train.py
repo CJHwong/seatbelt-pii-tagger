@@ -31,7 +31,7 @@ import yaml
 from pyarrow import parquet
 from transformers import BertConfig, BertForTokenClassification, PreTrainedTokenizerFast
 
-from augment import augmented
+from augment import PLAIN_SWAP_WORDS, SWAP_WORDS, augmented, lone_named, swapped, tool_lined
 from ema import WeightAverage
 from run_lib import (
     bench_gold,
@@ -182,6 +182,10 @@ def batch_stream(
     seed: int = SEED,
     augment: float = 0.0,
     source_share: dict[str, float] | None = None,
+    swap: float = 0.0,
+    lone: float = 0.0,
+    swap_words: list[str] = SWAP_WORDS,
+    tools: float = 0.0,
 ) -> Iterator[list[dict]]:
     """Endless encoded batches. Rows are drawn by SCRIPT_SHARE into a pool, and the pool
     is cut into batches of similar length, so a batch carries little padding. With
@@ -195,13 +199,23 @@ def batch_stream(
     label_index = {label: index for index, label in enumerate(labels)}
     picker = random.Random(seed)
     noise = random.Random(seed + 1)
+    swaps = random.Random(seed + 3)
+    lones = random.Random(seed + 4)
+    tool_lines = random.Random(seed + 5)
     draws = {name: boosted_picker(buckets[name], source_share or {}, picker) for name in names}
     while True:
         pool_rows = [draws[name]() for name in picker.choices(names, weights, k=batch_size * POOL_BATCHES)]
         pool_rows = [augmented(row, noise, augment) for row in pool_rows] if augment else pool_rows
+        pool_rows = [swapped(row, swaps, swap, swap_words) for row in pool_rows] if swap else pool_rows
+        pool_rows = [lone_named(row, lones, lone) for row in pool_rows] if lone else pool_rows
+        pool_rows = [tool_lined(row, tool_lines, tools) for row in pool_rows] if tools else pool_rows
         items = encode_batch(tokenizer, pool_rows, label_index)
         for indices in length_batches([len(item["ids"]) for item in items], batch_size, picker):
             yield [items[index] for index in indices]
+
+
+def swap_words_of(settings) -> list[str]:
+    return PLAIN_SWAP_WORDS if settings.swap_plain else SWAP_WORDS
 
 
 def parse_share(value: str) -> tuple[str, float]:
@@ -256,7 +270,7 @@ def distill_loss(student_logits: torch.Tensor, teachers: list, batch: dict) -> t
 def train(model, tokenizer, rows: list[dict], labels: list[str], settings: argparse.Namespace, run_dir: Path) -> dict:
     steps, lr = settings.steps, settings.lr
     shares = dict(parse_share(value) for value in settings.source_share)
-    stream = batch_stream(tokenizer, rows, labels, settings.batch, settings.seed, settings.augment, shares)
+    stream = batch_stream(tokenizer, rows, labels, settings.batch, settings.seed, settings.augment, shares, settings.swap_names, settings.lone_names, swap_words_of(settings), settings.lone_tools)
     late_step = int(steps * settings.late_from) if settings.late_share else None
     if settings.probe_steps:
         probe_head(model, stream, tokenizer.pad_token_id, settings.probe_steps, settings.bf16)
@@ -271,7 +285,7 @@ def train(model, tokenizer, rows: list[dict], labels: list[str], settings: argpa
             if step == late_step:  # domain upsampling at the end of training (Blakeney et al. 2024)
                 late = shares | dict(parse_share(value) for value in settings.late_share)
                 stream = batch_stream(
-                    tokenizer, rows, labels, settings.batch, settings.seed + 2, settings.augment, late
+                    tokenizer, rows, labels, settings.batch, settings.seed + 2, settings.augment, late, settings.swap_names, settings.lone_names, swap_words_of(settings), settings.lone_tools
                 )
             for group in optimizer.param_groups:
                 group["lr"] = learning_rate_at(step, steps, lr)
@@ -476,6 +490,30 @@ def parse_arguments() -> argparse.Namespace:
         "--augment", type=float, default=0.0, metavar="SHARE", help="share of rows given social-media noise"
     )
     train_mode.add_argument(
+        "--swap-names",
+        type=float,
+        default=0.0,
+        metavar="SHARE",
+        help="share of Latin rows whose person spans are filled with words that are not names",
+    )
+    train_mode.add_argument(
+        "--lone-names",
+        type=float,
+        default=0.0,
+        metavar="SHARE",
+        help="share of developer-context rows given one line with a lone first name or handle",
+    )
+    train_mode.add_argument(
+        "--swap-plain", action="store_true", help="--swap-names uses plain and invented words only, no tool names"
+    )
+    train_mode.add_argument(
+        "--lone-tools",
+        type=float,
+        default=0.0,
+        metavar="SHARE",
+        help="share of developer-context rows given one unlabelled line with a name-like tool name",
+    )
+    train_mode.add_argument(
         "--source-share",
         action="append",
         default=[],
@@ -538,6 +576,10 @@ def main() -> None:
         "cap": arguments.cap,
         "ema": arguments.ema,
         "augment": arguments.augment,
+        "swap_names": arguments.swap_names,
+        "lone_names": arguments.lone_names,
+        "swap_plain": arguments.swap_plain,
+        "lone_tools": arguments.lone_tools,
         "probe_steps": arguments.probe_steps,
         "teachers": arguments.teacher,
         "source_share": arguments.source_share,

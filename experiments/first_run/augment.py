@@ -93,3 +93,151 @@ def augmented(row: dict, picker: random.Random, share: float) -> dict:
     if row["script"] not in HAN_SCRIPTS or picker.random() >= share:
         return row
     return without_punctuation(row) if picker.random() < 0.5 else with_social_marks(row, picker)
+
+
+# Capitalized words that are not personal names. None of them is a product the planted
+# transcript set (scratch-research/plant.py) uses as a negative, so that set stays a test.
+TOOL_SWAP_WORDS = (
+    "Nginx Webpack Ansible Airflow Jupyter Pandas Tableau Figma Notion Vercel Heroku Celery Django Flask "
+    "Hadoop Mongo Bazel Gradle Maven Cargo Rollup Babel Ember Angular Astro Remix Fastly Okta Twilio"
+).split()
+# Plain and invented words only. R62 swapped in tool names too, and its tool-name false alarms
+# rose: a tool name labelled person teaches that tool names can be people.
+PLAIN_SWAP_WORDS = (
+    "Window Garden Orange Silver Market Bridge Harbor Copper Meadow Summit Lantern Cobalt Velvet Granite "
+    "Trelvo Quandix Morvane Zeltrin Ospery Calvix Durnell Feyra Brisko Nalthor"
+).split()
+SWAP_WORDS = TOOL_SWAP_WORDS + PLAIN_SWAP_WORDS
+
+
+def context_swapped(row: dict, picker: random.Random, words: list[str] = SWAP_WORDS) -> dict:
+    """Fill every person span with one or two capitalized words that are not names, keeping the
+    person label. The words carry no name signal, so the label has to come from the context.
+    Ghaddar et al. (TACL 2021) call the opposite habit name regularity bias: a name-like word
+    is tagged person whatever the sentence says."""
+    people = sorted((s for s in row["entities"] if s["label"] == "person"), key=lambda s: s["start"])
+    if not people:
+        return row
+    text, pieces, position, previous, added = row["text"], [], [], 0, 0
+    for span in people:
+        if span["start"] < previous:
+            continue
+        filler = " ".join(picker.sample(words, 2 if " " in text[span["start"] : span["end"]] else 1))
+        pieces.append(text[previous : span["start"]])
+        position += [index + added for index in range(previous, span["start"])]
+        position += [span["start"] + added + min(i, len(filler)) for i in range(span["end"] - span["start"])]
+        pieces.append(filler)
+        added += len(filler) - (span["end"] - span["start"])
+        previous = span["end"]
+    pieces.append(text[previous:])
+    position += [index + added for index in range(previous, len(text) + 1)]
+    return _moved(row, "".join(pieces), position)
+
+
+def swapped(row: dict, picker: random.Random, share: float, words: list[str] = SWAP_WORDS) -> dict:
+    """With probability share, fill a Latin row's person spans with words that are not names."""
+    if row["script"] in HAN_SCRIPTS or picker.random() >= share:
+        return row
+    return context_swapped(row, picker, words)
+
+
+# Developer-context sources, where a lone first name or handle is common in real transcripts
+# and rare in training: 53 of r61's 55 judged dev misses are single-token values.
+DEV_SOURCES = ("synthetic/dev-transcripts", "synthetic/llm-devwork", "synthetic/llm-agentwork")
+LONE_FIRST = (
+    "Anika Bastian Callum Delphine Eitan Fatima Gideon Hiro Isla Jasper Keiko Lorenzo Maeve Nikolai "
+    "Orla Quentin Rania Silas Thea Umar Vera Wesley Ximena Yusuf Zoe Adaeze Bjorn Carmen Dario Esme "
+    "Farid Gwen Hamza Imogen Jonas Kira Leon Mila Nils Odette Paulo Ronja Soren Talia Uriel Valentina"
+).split()
+LONE_WORDS = ("dev", "ops", "code", "hub", "lab", "io", "x")
+# Each template holds one {v}. The planted evaluation sets use other templates.
+LONE_TEMPLATES = (
+    ("person", "  owner: {v}"),
+    ("person", "- [ ] {v}: rotate the staging certificates"),
+    ("person", "    // {v} asked for this guard, keep it"),
+    ("person", "assigned_to={v}"),
+    ("person", "{v} approved these changes"),
+    ("person", "merged by {v} 2 hours ago"),
+    ("person", "on-call this week: {v}"),
+    ("person", "{v}: can we ship the hotfix before standup?"),
+    ("username", "drwxr-xr-x   5 {v}  staff   160 Oct  3 10:12 build"),
+    ("username", "{v}      48213   0.0  0.3  python worker.py"),
+    ("username", "@{v} commented 3 days ago"),
+    ("username", "/srv/home/{v}/projects/app/main.py:42: warning: unused import"),
+)
+
+
+def lone_value(label: str, picker: random.Random) -> str:
+    first = picker.choice(LONE_FIRST)
+    if label == "person":
+        return first.lower() if picker.random() < 0.3 else first
+    shapes = (first.lower(), f"{first.lower()}{picker.randint(2, 99)}", f"{first.lower()}-{picker.choice(LONE_WORDS)}")
+    return picker.choice(shapes)
+
+
+def _insertion_point(row: dict, picker: random.Random) -> int:
+    """A random line start that no span covers or ends at."""
+    inside, ends = _protected(row), {span["end"] for span in _spans(row)}
+    starts = [0] + [i + 1 for i, c in enumerate(row["text"]) if c == "\n" and i + 1 not in ends and not (i + 1 < len(inside) and inside[i + 1])]
+    return picker.choice(starts)
+
+
+def _inserted(row: dict, at: int, line: str) -> dict:
+    text = row["text"][:at] + line + row["text"][at:]
+    position = [i if i < at else i + len(line) for i in range(len(row["text"]) + 1)]
+    return _moved(row, text, position)
+
+
+def with_lone_name(row: dict, picker: random.Random) -> dict:
+    """Insert one line holding a lone first name or handle at a line start no span covers."""
+    at = _insertion_point(row, picker)
+    label, template = picker.choice(LONE_TEMPLATES)
+    value = lone_value(label, picker)
+    line = template.replace("{v}", value) + "\n"
+    moved = _inserted(row, at, line)
+    start = at + line.index(value)
+    return {**moved, "entities": sorted(moved["entities"] + [{"start": start, "end": start + len(value), "label": label}], key=lambda s: s["start"])}
+
+
+def lone_named(row: dict, picker: random.Random, share: float) -> dict:
+    """With probability share, give a developer-context row one lone name or handle line."""
+    if row.get("source") not in DEV_SOURCES or picker.random() >= share:
+        return row
+    return with_lone_name(row, picker)
+
+
+# Name-like tool names for contrastive lines: the same developer registers as LONE_TEMPLATES,
+# no label. R63 alone raised false alarms on tool names. These words appear in no planted
+# evaluation list and in neither swap list.
+LONE_TOOLS = (
+    "Hermes Apollo Phoenix Crystal Ray Jax Meteor Falcon Electron Deno Chai Sinon Nomad Consul Relay "
+    "Keras Tornado Unity Quarkus Grails Spring Argo Istio Envoy Caddy Kong Eureka Puma Chef Salt Gerrit "
+    "Loki Tempo Thanos Cortex Jaeger Zipkin Solr Druid Trino Hive Storm Heron"
+).split()
+TOOL_TEMPLATES = (
+    "Restarting {t} service... done",
+    "  image: {l}:2.4.1",
+    "{t} 3.2.1 installed successfully",
+    "    // {t} drops the header here, keep the retry",
+    "merged by CI: bump {t} to 2.0",
+    "on-call runbook: restart {t} first",
+    "@{l}/core@4.1.0",
+    "drwxr-xr-x   5 root  staff   160 Oct  3 10:12 {l}",
+    "{t}: connection refused, retrying in 5s",
+    "/opt/{l}/bin/{l} --config /etc/{l}.yaml",
+)
+
+
+def with_tool_line(row: dict, picker: random.Random) -> dict:
+    """Insert one line that holds a name-like tool name, unlabelled, at a line start no span covers."""
+    at = _insertion_point(row, picker)
+    tool = picker.choice(LONE_TOOLS)
+    line = picker.choice(TOOL_TEMPLATES).replace("{t}", tool).replace("{l}", tool.lower()) + "\n"
+    return _inserted(row, at, line)
+
+
+def tool_lined(row: dict, picker: random.Random, share: float) -> dict:
+    """With probability share, give a developer-context row one unlabelled tool-name line."""
+    if row.get("source") not in DEV_SOURCES or picker.random() >= share:
+        return row
+    return with_tool_line(row, picker)

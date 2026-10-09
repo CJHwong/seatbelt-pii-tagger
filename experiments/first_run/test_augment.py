@@ -1,6 +1,6 @@
 import random
 
-from augment import augmented, lowercased, with_social_marks, without_punctuation
+from augment import PLAIN_SWAP_WORDS, TOOL_SWAP_WORDS, augmented, context_swapped, lone_named, tool_lined, lowercased, with_lone_name, with_social_marks, without_punctuation
 
 
 def _texts(row: dict) -> list[str]:
@@ -61,3 +61,42 @@ def test_social_marks_never_stretch_a_span_that_ends_the_text():
         row = _row("電話 0912345678", [("0912345678", "phone")])
         out = with_social_marks(row, random.Random(seed))
         assert _texts(out) == ["0912345678"]
+
+
+def test_lone_name_adds_one_single_token_span_and_keeps_the_others():
+    row = _row("cd /repo\nAsk Ann Lee about it\nmake test", [("Ann Lee", "person")], script="latin")
+    for seed in range(50):
+        out = with_lone_name(row, random.Random(seed))
+        added = [s for s in out["entities"] if out["text"][s["start"] : s["end"]] != "Ann Lee"]
+        assert _texts(out).count("Ann Lee") == 1
+        assert len(added) == 1 and " " not in out["text"][added[0]["start"] : added[0]["end"]]
+        assert out["text"].count("\n") == row["text"].count("\n") + 1
+
+
+def test_lone_name_never_splits_a_span_across_a_line():
+    row = _row("Ann\nLee", [("Ann\nLee", "person")], script="latin")
+    for seed in range(20):
+        out = with_lone_name(row, random.Random(seed))
+        assert "Ann\nLee" in _texts(out)
+
+
+def test_lone_named_touches_only_developer_sources():
+    row = {**_row("Ask Ann", [("Ann", "person")], script="latin"), "source": "nvidia/Nemotron-PII"}
+    assert lone_named(row, random.Random(1), 1.0) is row
+    assert lone_named({**row, "source": "synthetic/llm-devwork"}, random.Random(1), 1.0) is not row
+
+
+def test_plain_swap_never_puts_a_tool_name_in_a_person_span():
+    row = _row("Ask Ann Lee or Bo about it.", [("Ann Lee", "person"), ("Bo", "person")], script="latin")
+    for seed in range(50):
+        out = context_swapped(row, random.Random(seed), PLAIN_SWAP_WORDS)
+        words = {w for text in _texts(out) for w in text.split()}
+        assert words <= set(PLAIN_SWAP_WORDS) and not words & set(TOOL_SWAP_WORDS)
+
+
+def test_tool_line_adds_text_but_no_span():
+    row = {**_row("cd /repo\nAsk Ann Lee\n", [("Ann Lee", "person")], script="latin"), "source": "synthetic/llm-agentwork"}
+    for seed in range(30):
+        out = tool_lined(row, random.Random(seed), 1.0)
+        assert _texts(out) == ["Ann Lee"]
+        assert out["text"].count("\n") == row["text"].count("\n") + 1
