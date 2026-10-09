@@ -29,7 +29,7 @@ sys.path[:0] = [str(HERE.parent / p) for p in ("first_run", "vocab_prune")]
 
 from train import RUNS, final_checkpoint, load_checkpoint
 
-LENGTHS = (64, 128, 256, 512)
+LENGTHS = (64, 128, 192, 256, 320, 384, 512)
 # The fp32 export masks with finfo(float32).min, which is -inf in fp16 and turns a
 # fully masked row into NaN. -1e4 is far enough below any score to zero the softmax.
 MASKED = -1e4
