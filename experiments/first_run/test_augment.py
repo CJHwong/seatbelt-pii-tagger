@@ -1,6 +1,6 @@
 import random
 
-from augment import PLAIN_SWAP_WORDS, TOOL_SWAP_WORDS, augmented, context_swapped, lone_named, tool_lined, lowercased, with_lone_name, with_social_marks, without_punctuation
+from augment import LONE_TOOLS, PLAIN_SWAP_WORDS, WIDE_LONE_TOOLS, TOOL_SWAP_WORDS, augmented, context_swapped, lone_named, tool_lined, with_tool_line, lowercased, with_lone_name, with_social_marks, without_punctuation
 
 
 def _texts(row: dict) -> list[str]:
@@ -100,3 +100,11 @@ def test_tool_line_adds_text_but_no_span():
         out = tool_lined(row, random.Random(seed), 1.0)
         assert _texts(out) == ["Ann Lee"]
         assert out["text"].count("\n") == row["text"].count("\n") + 1
+
+
+def test_wide_tool_list_keeps_the_narrow_list_and_adds_only_unlabelled_lines():
+    assert WIDE_LONE_TOOLS[: len(LONE_TOOLS)] == LONE_TOOLS
+    row = _row("Ask Ann Lee\n", [("Ann Lee", "person")], script="latin")
+    for seed in range(30):
+        out = with_tool_line(row, random.Random(seed), WIDE_LONE_TOOLS)
+        assert _texts(out) == ["Ann Lee"]

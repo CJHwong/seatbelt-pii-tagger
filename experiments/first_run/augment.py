@@ -214,6 +214,16 @@ LONE_TOOLS = (
     "Keras Tornado Unity Quarkus Grails Spring Argo Istio Envoy Caddy Kong Eureka Puma Chef Salt Gerrit "
     "Loki Tempo Thanos Cortex Jaeger Zipkin Solr Druid Trino Hive Storm Heron"
 ).split()
+# A wider list for R66: more name-like tool and project names, also none in an evaluation,
+# swap or name list. R65's 44 words did not stop false alarms on unseen tool names.
+WIDE_LONE_TOOLS = LONE_TOOLS + (
+    "Percy Drone Flux Helm Tilt Rancher Falco Clair Sonar Mend Atlantis Kitchen Locust Gatling Artillery "
+    "Vegeta Siege Varnish Squid Tyk Ambassador Contour Skipper Fabio Cube Pulsar Rabbit Neon Ghost Wagtail "
+    "Plone Drupal Odoo Frappe Matrix Element Synapse Conduit Jitsi Restic Borg Velero Stash Rook Ceph Lustre "
+    "Bower Grunt Gulp Parcel Vitest Playwright Puppeteer Appium Detox Storybook Buildkite Concourse Pulumi "
+    "Crossplane Molecule Superset Metabase Redash Dremio Patroni Vitess Citus Hasura Strapi Directus "
+    "Mattermost Zulip Nextcloud Syncthing Longhorn Minio Mosquitto Zookeeper Etcd Podman Kaniko Cosign Trivy"
+).split()
 TOOL_TEMPLATES = (
     "Restarting {t} service... done",
     "  image: {l}:2.4.1",
@@ -228,16 +238,16 @@ TOOL_TEMPLATES = (
 )
 
 
-def with_tool_line(row: dict, picker: random.Random) -> dict:
+def with_tool_line(row: dict, picker: random.Random, tools: list[str] = LONE_TOOLS) -> dict:
     """Insert one line that holds a name-like tool name, unlabelled, at a line start no span covers."""
     at = _insertion_point(row, picker)
-    tool = picker.choice(LONE_TOOLS)
+    tool = picker.choice(tools)
     line = picker.choice(TOOL_TEMPLATES).replace("{t}", tool).replace("{l}", tool.lower()) + "\n"
     return _inserted(row, at, line)
 
 
-def tool_lined(row: dict, picker: random.Random, share: float) -> dict:
+def tool_lined(row: dict, picker: random.Random, share: float, tools: list[str] = LONE_TOOLS) -> dict:
     """With probability share, give a developer-context row one unlabelled tool-name line."""
     if row.get("source") not in DEV_SOURCES or picker.random() >= share:
         return row
-    return with_tool_line(row, picker)
+    return with_tool_line(row, picker, tools)
