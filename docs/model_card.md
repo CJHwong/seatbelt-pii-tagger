@@ -63,7 +63,7 @@ The model runs in the `tagger` mode of the [agent-seatbelt](https://github.com/C
 In an agent-seatbelt checkout, start the server. It downloads the files from this repository on first use:
 
 ```bash
-uv run hooks-pii/pii-server.py --mode tagger --port 9123
+uv run hooks-pii/server/server.py --mode tagger --port 9123
 ```
 
 The server picks the network's runtime by itself:

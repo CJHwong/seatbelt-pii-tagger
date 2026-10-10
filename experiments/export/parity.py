@@ -9,7 +9,7 @@
 
 usage: uv run --script parity.py HOOKS_PII_DIR EXPORT_DIR [SYSTEM]
 
-Runs the hook's tagger and its chain (pii_tagger.TaggerModel.tag, then apply_chain) on
+Runs the hook's tagger and its chain (detectors.tagger.TaggerModel.tag, then apply_chain) on
 every row of every comparison group, and compares the spans, by start, end and label,
 with runs/[GROUP/]SYSTEM.jsonl. SYSTEM defaults to the int8 export with the chain,
 release_onnx8_post_pub_plc_off_thr_keys. Prints the rows that differ per group; the
@@ -35,10 +35,10 @@ def key(spans: list[dict]) -> list[tuple[int, int, str]]:
 
 
 def main(hooks: str, export: str, system: str) -> None:
-    sys.path.insert(0, hooks)
+    sys.path.insert(0, str(Path(hooks) / "server"))
     os.environ["PII_TAGGER_DIR"] = export
-    from pii_tagger import TaggerModel, asset_dir
-    from pii_tagger_rules import apply_chain
+    from detectors.tagger import TaggerModel, asset_dir
+    from rules.tagger_rules import apply_chain
 
     model = TaggerModel(asset_dir())
     total = differing = 0
