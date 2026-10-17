@@ -101,7 +101,13 @@ def read_rule_secrets() -> Iterator[dict]:
     with open(DATA / "synthetic/rule_secrets/train.jsonl", encoding="utf-8") as handle:
         for line in handle:
             row = json.loads(line)
-            yield {"text": row["text"], "spans": row["spans"], "language": None, "script": row.get("script")}
+            yield {
+                "text": row["text"],
+                "spans": row["spans"],
+                "language": None,
+                "script": row.get("script"),
+                "kind": "tool_output",
+            }  # code and config text
 
 
 def read_llm_social() -> Iterator[dict]:
@@ -113,15 +119,31 @@ def read_llm_social() -> Iterator[dict]:
             yield {"text": row["text"], "spans": row["spans"], "language": None, "script": row["script"]}
 
 
+AGENT_PROSE = {
+    "agent reply",
+    "user prompt",
+    "status report",
+    "status rollup",
+    "sprint board",
+    "release checklist",
+    "incident tracker",
+    "vendor comparison",
+    "on-call rotation",
+    "review queue",
+}
+
+
 def read_llm_agentwork() -> Iterator[dict]:
-    """Coding-agent sessions LLM agents wrote and a second model checked."""
+    """Coding-agent sessions LLM agents wrote and a second model checked. A register that is not
+    prose (a tool call, CLI output, JSON, a log) reads as a tool window to a run trained with --frame."""
     path = DATA / "synthetic/llm_agentwork/train.jsonl"
     if not path.exists():
         return
     with open(path, encoding="utf-8") as handle:
         for line in handle:
             row = json.loads(line)
-            yield {"text": row["text"], "spans": row["spans"], "language": None, "script": row["script"]}
+            kind = None if row.get("register") in AGENT_PROSE else "tool_output"
+            yield {"text": row["text"], "spans": row["spans"], "language": None, "script": row["script"], "kind": kind}
 
 
 def read_llm_devwork() -> Iterator[dict]:
@@ -133,6 +155,9 @@ def read_llm_devwork() -> Iterator[dict]:
         for line in handle:
             row = json.loads(line)
             yield {"text": row["text"], "spans": row["spans"], "language": None, "script": row["script"]}
+
+
+TOOL_KINDS = {"tool_call", "tool_output"}
 
 
 def read_path(path: Path) -> Iterator[dict]:
@@ -147,6 +172,7 @@ def read_path(path: Path) -> Iterator[dict]:
                 "language": None,
                 "script": row["script"],
                 "origin": row.get("origin"),
+                "kind": row.get("kind"),
             }
 
 
@@ -271,6 +297,8 @@ def build_one(name: str, config: dict, seen: set[bytes], train, dev) -> dict:
             continue
         seen.add(digest)
         record["source"] = name
+        if row.get("kind") in TOOL_KINDS:  # read as the segment id by a run trained with --frame
+            record["frame"] = 1
         split = dev if is_dev(row.get("origin") or record["text"]) else train  # a copy follows its first version
         split.write(json.dumps(record, ensure_ascii=False) + "\n")
         counts["kept_dev" if split is dev else "kept_train"] += 1

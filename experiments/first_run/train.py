@@ -158,7 +158,10 @@ def encode_batch(tokenizer, rows: list[dict], label_index: dict[str, int]) -> li
     for row, ids, offsets in zip(rows, encoded["input_ids"], encoded["offset_mapping"], strict=True):
         spans = effective_spans(tokenizer.convert_ids_to_tokens(ids), offsets)
         tags = mask_ignored(token_tags(spans, row["entities"]), spans, row["ignore"])
-        items.append({"ids": ids, "targets": [IGNORE if tag is None else label_index[tag] for tag in tags]})
+        item = {"ids": ids, "targets": [IGNORE if tag is None else label_index[tag] for tag in tags]}
+        if row.get("frame"):  # only a --frame run keeps the key; see without_frame
+            item["frame"] = row["frame"]
+        items.append(item)
     return items
 
 
@@ -446,9 +449,18 @@ def evaluate_benchmark(model, tokenizer, labels: list[str]) -> dict:
     return report
 
 
-def evaluate(model, tokenizer, labels: list[str]) -> dict:
+def without_frame(rows: list[dict]) -> list[dict]:
+    """A build marks tool call and tool output rows with "frame": 1. A run without --frame must
+    not see it, so it trains and scores exactly as before the key existed."""
+    for row in rows:
+        row.pop("frame", None)
+    return rows
+
+
+def evaluate(model, tokenizer, labels: list[str], frame: bool = False) -> dict:
     started = time.monotonic()
     dev = read_jsonl(DATA / "prepared/dev.jsonl")
+    dev = dev if frame else without_frame(dev)
     heldout = [
         {"text": row["text"], "entities": [s for s in row["spans"] if s["label"] != "ignore"]}
         for row in read_jsonl(DATA / "synthetic/heldout.jsonl")
@@ -495,7 +507,7 @@ def load_checkpoint(checkpoint: Path) -> tuple[BertForTokenClassification, PreTr
 
 def evaluate_checkpoint(run_dir: Path, checkpoint: str) -> None:
     model, tokenizer, labels = load_checkpoint(run_dir / checkpoint)
-    report = evaluate(model, tokenizer, labels)
+    report = evaluate(model, tokenizer, labels, json.loads((run_dir / "run.json").read_text()).get("frame", False))
     (run_dir / f"eval-{Path(checkpoint).stem}.json").write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))
 
@@ -510,6 +522,9 @@ def parse_arguments() -> argparse.Namespace:
     train_mode.add_argument("--build", default="build-prepared")
     train_mode.add_argument("--batch", type=int, default=32)
     train_mode.add_argument("--bf16", action="store_true", help="bfloat16 autocast, about 38%% faster on Apple silicon")
+    train_mode.add_argument(
+        "--frame", action="store_true", help="feed a build's tool-window marker as the segment id (token_type_ids)"
+    )
     train_mode.add_argument(
         "--without", action="append", default=[], metavar="SOURCE", help="drop a source's rows, for an A/B control"
     )
@@ -599,12 +614,15 @@ def main() -> None:
     steps, lr = arguments.steps, arguments.lr
     torch.manual_seed(arguments.seed)
     run_dir.mkdir(parents=True, exist_ok=True)
-    (run_dir / "run.json").write_text(json.dumps({"build": arguments.build}))
+    (run_dir / "run.json").write_text(
+        json.dumps({"build": arguments.build} | ({"frame": True} if arguments.frame else {}))
+    )
     build = build_of(run_dir)
     tokenizer = load_tokenizer(build)
     labels = bioes_labels(list(TYPES))
     rows = [row for row in read_jsonl(DATA / "prepared/train.jsonl") if row.get("source") not in arguments.without]
     rows = capped(rows, arguments.cap)
+    rows = rows if arguments.frame else without_frame(rows)
     model = load_model(build, len(tokenizer), tokenizer.pad_token_id, len(labels))
     result = {
         "build": arguments.build,
@@ -635,7 +653,7 @@ def main() -> None:
     }
     result |= train(model, tokenizer, rows, labels, arguments, run_dir)
     (run_dir / "result.json").write_text(json.dumps(result, indent=2))
-    result["eval"] = evaluate(model, tokenizer, labels)
+    result["eval"] = evaluate(model, tokenizer, labels, arguments.frame)
     (run_dir / "result.json").write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2))
 

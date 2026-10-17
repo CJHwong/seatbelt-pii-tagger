@@ -72,6 +72,8 @@ def encode(tokenizer, rows: list[dict], label_index: dict[str, int] | None, leng
     for row, ids, offsets in zip(rows, encoded["input_ids"], encoded["offset_mapping"], strict=True):
         spans = effective_spans(tokenizer.convert_ids_to_tokens(ids), offsets)
         item = {"ids": ids, "spans": spans, "truncated_at": max((s[1] for s in spans if s), default=0)}
+        if row.get("frame"):  # 1 for a tool call or tool output window; read as the segment id
+            item["frame"] = row["frame"]
         if label_index is not None:
             tags = token_tags(spans, row["entities"])
             item["targets"] = [IGNORE if tag is None else label_index[tag] for tag in tags]
@@ -127,6 +129,11 @@ def padded(items: list[dict], pad_id: int, with_targets: bool) -> dict[str, torc
         if with_targets:
             targets[row, : len(item["ids"])] = torch.tensor(item["targets"])
     batch = {"input_ids": ids.to(DEVICE), "attention_mask": mask.to(DEVICE)}
+    if any(item.get("frame") for item in items):  # only frame-trained runs get rows with a frame
+        types = torch.zeros((len(items), width), dtype=torch.long)
+        for row, item in enumerate(items):
+            types[row, : len(item["ids"])] = item.get("frame", 0)
+        batch["token_type_ids"] = types.to(DEVICE)
     if with_targets:
         batch["labels"] = targets.to(DEVICE)
     return batch
@@ -204,7 +211,12 @@ def predict_rows(
         for row_index, row in enumerate(rows)
         for offset, chunk in chunk_text(row["text"], CHUNK_CHARS)
     ]
-    items = encode(tokenizer, [{"text": chunk} for _, _, chunk in pieces], None, EVAL_LENGTH)
+    items = encode(
+        tokenizer,
+        [{"text": chunk, "frame": rows[row_index].get("frame")} for row_index, _, chunk in pieces],
+        None,
+        EVAL_LENGTH,
+    )
     chunk_predictions = predict(model, items, pad_id, labels)
     predictions: list[list[dict]] = [[] for _ in rows]
     visible: list[list[tuple[int, int]]] = [[] for _ in rows]

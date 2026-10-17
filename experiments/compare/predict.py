@@ -88,6 +88,28 @@ class PersonBias(torch.nn.Module):
         return SimpleNamespace(logits=logits + self.bias.to(logits.device))
 
 
+class ToolOffsets(torch.nn.Module):
+    """Per-label offsets for tool call and tool output windows (segment id 1) of a run trained
+    with --frame, on top of the offsets already in the classifier bias. A larger offset flags
+    less, as on the outside tag. calibrate_per_frame.py fits them on unlabelled windows."""
+
+    def __init__(self, model, labels: list[str], offsets: dict[str, float], mask_only: bool = False) -> None:
+        super().__init__()
+        self.model, self.mask_only = model, mask_only
+        self.delta = torch.tensor(
+            [-offsets.get(label.split("-", 1)[-1], 0.0) if label != "O" else 0.0 for label in labels]
+        )
+
+    def forward(self, **inputs) -> SimpleNamespace:
+        types = inputs.get("token_type_ids")
+        if self.mask_only and types is not None:  # a run trained without --frame reads segment 0 only
+            inputs = {**inputs, "token_type_ids": torch.zeros_like(types)}
+        logits = self.model(**inputs).logits.float()
+        if types is None:
+            return SimpleNamespace(logits=logits)
+        return SimpleNamespace(logits=logits + (types == 1).unsqueeze(-1).float() * self.delta.to(logits.device))
+
+
 ONNX_SUFFIXES = {"_onnx8": "model.int8.onnx", "_onnx": "model.onnx"}  # export_onnx.py output
 
 
@@ -185,6 +207,15 @@ def predict_chunked(predict, text: str) -> list[dict]:
     return spans
 
 
+TOOL_KINDS = {"tool_call", "tool_output"}
+
+
+def framed(rows: list[dict]) -> list[dict]:
+    """For a run trained with --frame: a transcript window from a tool call or tool output gets
+    segment id 1. A row with no kind (every public set) stays 0."""
+    return [{**row, "frame": 1} if row.get("kind") in TOOL_KINDS else row for row in rows]
+
+
 def set_predictor(system: str):
     """A rows-to-spans function, with the system loaded once. A HALF_SUFFIX name loads the
     same checkpoint with fp16 weights, which halves memory on MPS. A CALIBRATED_SUFFIX name
@@ -204,6 +235,18 @@ def set_predictor(system: str):
         maps = None
         if calibrated:
             maps = json.loads((HERE / "runs" / f"calibration.{checkpoint}.pooled.json").read_text())["maps"]
+        config = (
+            json.loads((RUNS / CHECKPOINTS[checkpoint]).parent.joinpath("run.json").read_text())
+            if checkpoint in CHECKPOINTS
+            else {}
+        )
+        if config.get("frame"):
+            if config.get("tool_offsets"):
+                model = ToolOffsets(model, labels, config["tool_offsets"])
+            return lambda rows: predict_rows(model, tokenizer, framed(rows), tokenizer.pad_token_id, labels, maps)[0]
+        if config.get("kind_offsets"):  # offsets for tool windows on a run trained without --frame
+            model = ToolOffsets(model, labels, config["kind_offsets"], mask_only=True)
+            return lambda rows: predict_rows(model, tokenizer, framed(rows), tokenizer.pad_token_id, labels, maps)[0]
         return lambda rows: predict_rows(model, tokenizer, rows, tokenizer.pad_token_id, labels, maps)[0]
     if onnx_path(checkpoint) is not None:
         model, tokenizer, labels = load_onnx(checkpoint)
