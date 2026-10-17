@@ -7,7 +7,7 @@
 usage: uv run scripts/build_training_set.py
 Writes data/prepared/train.jsonl, data/prepared/dev.jsonl and data/prepared/stats.json, then
 runs experiments/compare/leak_check.py, which rewrites runs/leaked.json and fails the build
-when a training row copies a transcript dev or test window.
+when a training row copies a transcript dev, test, live or events window.
 Each row: {"text", "entities": [{start, end, label}], "ignore": [{start, end}], "source", "script"}.
 """
 

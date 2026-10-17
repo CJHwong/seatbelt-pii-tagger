@@ -6,7 +6,7 @@
 
 usage: uv run --script leak_check.py   -> runs/leaked.json, counts printed; exit 1 on a transcript leak
 
-Evaluation texts: every group in sets.GROUPS, zh_bench, and the transcript dev and test
+Evaluation texts: every group in sets.GROUPS, zh_bench, and the transcript dev, test, live and events
 windows. A training row covers an evaluation text when it holds the same whitespace-free
 text, or shares 20% or more of the text's windows of 32 Latin or 16 Han characters.
 
@@ -38,7 +38,7 @@ OUT = HERE / "runs/leaked.json"
 SPACE, HAN = re.compile(r"\s+"), re.compile(r"[一-鿿]")
 WINDOW_SIZES = ((16, True), (32, False))  # (characters, Han window)
 COVERED, LEAKED = 0.2, 0.5
-TRANSCRIPT_SETS = ("transcript_dev", "transcript_test")
+TRANSCRIPT_SETS = ("transcript_dev", "transcript_test", "transcript_live", "transcript_events")
 
 # The index, built once in the parent; forked workers share it.
 # Every owner, not the first: a text in two sets must be marked leaked in both.
@@ -81,7 +81,9 @@ def evaluation_texts() -> None:
                 add(row["text"], name)
     for row in zh_bench_rows():
         add(row["text"], "zh_bench")
-    for name, path in zip(TRANSCRIPT_SETS, ("sample.jsonl", "test/sample.jsonl"), strict=True):
+    for name, path in zip(
+        TRANSCRIPT_SETS, ("sample.jsonl", "test/sample.jsonl", "live/sample.jsonl", "events/events.jsonl"), strict=True
+    ):
         if not (TRANSCRIPTS / path).exists():  # private; a machine without it trains no transcript rows either
             print(f"warning: {name} is not on this machine; its leak check is skipped", file=sys.stderr)
             continue
