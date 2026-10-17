@@ -184,6 +184,17 @@ def read_wiki_negatives() -> Iterator[dict]:
             yield {"text": row["text"], "spans": [], "language": None, "script": row["script"]}
 
 
+def read_digit_contrast() -> Iterator[dict]:
+    """The same digit shapes as IDs and as business numbers (scripts/digit_contrast.py)."""
+    path = DATA / "synthetic/digit_contrast/train.jsonl"
+    if not path.exists():
+        return
+    with open(path, encoding="utf-8") as handle:
+        for line in handle:
+            row = json.loads(line)
+            yield {"text": row["text"], "spans": row["spans"], "language": None, "script": row["script"]}
+
+
 def read_wiki_negatives_no_person() -> Iterator[dict]:
     """The same paragraphs without the ones flagged as person. Public and private names look alike."""
     with open(DATA / "wikimedia/wiki_negatives/train.jsonl", encoding="utf-8") as handle:
@@ -204,6 +215,7 @@ READERS = {
     "synthetic/llm-social": read_llm_social,
     "synthetic/llm-devwork": read_llm_devwork,
     "synthetic/llm-agentwork": read_llm_agentwork,
+    "synthetic/digit-contrast": read_digit_contrast,
     "wikimedia/wiki-negatives": read_wiki_negatives,
     "wikimedia/wiki-negatives-no-person": read_wiki_negatives_no_person,
 }

@@ -1,0 +1,88 @@
+# Rows where a long digit run is an ID in one place and a business or system number in
+# another. Read by scripts/digit_contrast.py. Syntax is in scripts/synth_lib.py:
+#   [a|b]   pick one variant       {slot}   fill a slot
+# No literal square brackets: synth_lib reads them as variants.
+# Labelled slots (PII): ssn tw_id cn_id passport driver_license bank_account card
+# Unlabelled slots (not PII, per the guideline): order invoice tracking booking ticket epoch run_id bytes pid
+# A third of the templates hold only business numbers, a third mix both, a third hold IDs.
+# Template text holds no digit run of 5 or more; every long number comes from a slot.
+
+en:
+  # business and system numbers only
+  - "Order #{order} shipped [today|yesterday]. Tracking number: {tracking}."
+  - "invoice_id={invoice} status=paid amount=1,240.00 created_at={epoch}"
+  - "Booking {booking} is confirmed. [Container pickup|Cargo cut-off] is on Friday."
+  - "$ gh run view {run_id} --log-failed"
+  - "2024-05-02T10:14:07Z INFO worker pid={pid} processed batch {order} in 418ms"
+  - "Downloaded {bytes} bytes to /tmp/export.csv (request {ticket})."
+  - "{\"order_id\": \"{order}\", \"tracking\": \"{tracking}\", \"ts\": {epoch}}"
+  - "Ticket {ticket}: customer asks why PO {order} is still pending."
+  # contrast: an ID and a business number in one row
+  - "Customer verified with SSN {ssn}. Refund for order {order} approved."
+  - "Passport no. {passport} matches the traveller on booking {booking}."
+  - "Please wire the refund to account {bank_account}. Your invoice number is {invoice}."
+  - "KYC check: driver license {driver_license}, application {ticket}, submitted at {epoch}."
+  - "{\"customer_ssn\": \"{ssn}\", \"order_id\": \"{order}\", \"created\": {epoch}}"
+  - "The card used for this order was {card}; the charge reference is {invoice}."
+  - "user_passport={passport} visa_application={ticket} pid={pid}"
+  - "Shipment {tracking} is held at customs until we receive passport {passport}."
+  # IDs only
+  - "My social security number is {ssn}, please update my file."
+  - "Driver's license number: {driver_license}, expires next March."
+  - "Account number {bank_account}, routing on file. Please do not share."
+  - "Passport {passport} was reported lost on Tuesday."
+  - "national_id: {ssn}"
+  - "Card on file: {card}. Billing address unchanged."
+  # more ID formats and frames
+  - "Employee ID {employee} is not the same as the NI number {nino}; HR needs the second one."
+  - "Name,Customer No,SIN\nA. Client,{customer},{sin}"
+  - "applicant:\n  case_number: {case}\n  aadhaar: {aadhaar}\n  submitted: {epoch}"
+  - "Hi, re case {case}: my DNI is {dni} and my IBAN is {iban}. Thanks."
+  - "BSN: {bsn}\nCustomer number: {customer}\nDevice serial: {serial}"
+  - "Driving licence {uk_licence} checked against booking {booking}."
+  - "member_id={customer} iban={iban} last_login={epoch}"
+  - "Serial {serial}, warranty case {case}. No personal data attached."
+  - "Customer {customer} called about invoice {invoice}; no ID was needed."
+  - "Employee {employee} badge reissued, ticket {ticket}."
+  - "Please confirm your National Insurance number ({nino}) before we process claim {case}."
+  - "Aadhaar {aadhaar} linked to account {bank_account}."
+  - "Transfer to IBAN {iban}, reference {invoice}."
+  - "SIN on file: {sin}. Employee number: {employee}."
+
+zh-Hant:
+  # 商業與系統編號
+  - "訂單編號 {order} 已出貨，物流單號 {tracking}。"
+  - "發票號碼 {invoice} 已開立，請於月底前付款。"
+  - "訂位代號 {booking} 已確認，請準時報到。"
+  - "工單 {ticket} 已轉給倉儲組處理，時間戳 {epoch}。"
+  - "下載完成，共 {bytes} 位元組，處理程序 {pid}。"
+  # 對照：同一列有身分證件與商業編號
+  - "客戶身分證字號 {tw_id}，訂單 {order} 已退款。"
+  - "護照號碼 {passport} 與訂位 {booking} 的旅客相符。"
+  - "請將退款匯入帳號 {bank_account}，發票號碼為 {invoice}。"
+  - "駕照號碼 {driver_license}，申請編號 {ticket}。"
+  - "信用卡號 {card} 刷卡失敗，交易序號 {invoice}。"
+  # 只有證件
+  - "我的身分證字號是 {tw_id}，麻煩幫我更新資料。"
+  - "護照號碼：{passport}，下個月到期。"
+  - "銀行帳號 {bank_account}，請勿外流。"
+  - "駕照號碼 {driver_license} 已登記。"
+
+zh-Hans:
+  # 商业与系统编号
+  - "订单号 {order} 已发货，快递单号 {tracking}。"
+  - "发票号码 {invoice} 已开具，请在月底前付款。"
+  - "预订号 {booking} 已确认，请准时到达。"
+  - "工单 {ticket} 已转交仓库处理，时间戳 {epoch}。"
+  - "下载完成，共 {bytes} 字节，进程号 {pid}。"
+  # 对照：同一行有证件号码与商业编号
+  - "客户身份证号 {cn_id}，订单 {order} 已退款。"
+  - "护照号码 {passport} 与预订 {booking} 的旅客一致。"
+  - "请将退款转入账号 {bank_account}，发票号码为 {invoice}。"
+  - "驾驶证号 {driver_license}，申请编号 {ticket}。"
+  - "银行卡号 {card} 支付失败，交易流水号 {invoice}。"
+  # 只有证件
+  - "我的身份证号是 {cn_id}，请帮我更新信息。"
+  - "护照号码：{passport}，下个月到期。"
+  - "银行账号 {bank_account}，请勿外传。"
+  - "驾驶证号 {driver_license} 已登记。"

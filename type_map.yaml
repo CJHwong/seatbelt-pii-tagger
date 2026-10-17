@@ -391,3 +391,13 @@ datasets:
       military_id: military_id
       household_no: household_no
       ignore: ignore
+
+  synthetic/digit-contrast:  # scripts/digit_contrast.py writes final types; identity map
+    include: true
+    languages: null
+    keep_chinese: true
+    labels:
+      national_id: national_id
+      passport: passport
+      driver_license: driver_license
+      account_number: account_number
