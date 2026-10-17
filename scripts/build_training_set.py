@@ -195,6 +195,17 @@ def read_digit_contrast() -> Iterator[dict]:
             yield {"text": row["text"], "spans": row["spans"], "language": None, "script": row["script"]}
 
 
+def read_field_contrast() -> Iterator[dict]:
+    """Field false alarms next to the real PII of the same frame (scripts/field_contrast.py)."""
+    path = DATA / "synthetic/field_contrast/train.jsonl"
+    if not path.exists():
+        return
+    with open(path, encoding="utf-8") as handle:
+        for line in handle:
+            row = json.loads(line)
+            yield {"text": row["text"], "spans": row["spans"], "language": None, "script": row["script"]}
+
+
 def read_wiki_negatives_no_person() -> Iterator[dict]:
     """The same paragraphs without the ones flagged as person. Public and private names look alike."""
     with open(DATA / "wikimedia/wiki_negatives/train.jsonl", encoding="utf-8") as handle:
@@ -216,6 +227,7 @@ READERS = {
     "synthetic/llm-devwork": read_llm_devwork,
     "synthetic/llm-agentwork": read_llm_agentwork,
     "synthetic/digit-contrast": read_digit_contrast,
+    "synthetic/field-contrast": read_field_contrast,
     "wikimedia/wiki-negatives": read_wiki_negatives,
     "wikimedia/wiki-negatives-no-person": read_wiki_negatives_no_person,
 }

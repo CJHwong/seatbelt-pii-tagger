@@ -1,0 +1,55 @@
+# Rows for scripts/field_contrast.py. Syntax is in scripts/synth_lib.py:
+#   [a|b]   pick one variant       {slot}   fill a slot
+# No literal square brackets: synth_lib reads them as variants.
+# Negatives (unlabelled): lang_cookie locale code_id metric count service sha
+# Positives (labelled): first (person), full (person), handle (username), session_token (secret)
+# Each frame holds both kinds somewhere, so the value decides, not the frame. Wording stays
+# different from the field evaluation set, which must not be trained on.
+
+en:
+  # locale cookies against session cookies
+  - "Set-Cookie: {lang_cookie}; Max-Age=31536000; SameSite=Lax"
+  - "Set-Cookie: sessionid={session_token}; Secure; HttpOnly"
+  - "Cookie header was {lang_cookie}; the session cookie {session_token} expired at noon"
+  # mixed-case code identifiers
+  - "The serializer reads {code_id} before it writes the audit row."
+  - "rename {code_id} to a shorter name in the next migration"
+  - "class Meta: unique_together = (\"{code_id}\", \"tenant\")"
+  # locale tags at a line start
+  - "{locale}: translated 214 strings, 3 missing"
+  - "{locale} | done\n{locale} | pending"
+  - "- {locale} (fallback to en)"
+  # numbers keyed by a PII label name, and real values under the same keys
+  - "passport recall {metric}, driver_license recall {metric}, email precision {metric}"
+  - "{\"spans_by_label\": {\"phone\": {count}, \"username\": {count}}}"
+  - "person {count}  username {count}  secret {count}"
+  # names and handles in git output, against hashes and services
+  - "$ git shortlog -sn\n    {count}  {first}\n    {count}  {first}"
+  - "{sha} [Fix|Add|Drop|Bump] retry on timeout ({first}, [2|3|5] days ago)"
+  - "Merge pull request #{count} from {handle}/fix-retry"
+  - "{sha} refs/heads/{handle}/cleanup"
+  - "remote: {handle} pushed {sha} to main"
+  - "{sha} -> {sha} main (forced update)"
+  # names and handles in Slack and JSON name fields, against service names
+  - "{\"ok\": true, \"user\": {\"name\": \"{handle}\", \"profile\": {\"first_name\": \"{first}\"}}}"
+  - "channel members: {handle}, {handle} (2 of 2 active)"
+  - "{\"name\": \"{service}\", \"replicas\": 3, \"owner\": \"{handle}\"}"
+  - "{\"name\": \"{service}\", \"image\": \"{service}:latest\"}"
+  - "assignee: {first}\nreviewers: {handle}, {handle}"
+  - "{first} reacted to your message in #deploys"
+
+zh-Hant:
+  - "Set-Cookie: {lang_cookie}; Path=/"
+  - "語系 {locale} 已翻譯完成，剩下 3 句。"
+  - "欄位 {code_id} 由系統寫入，使用者不能修改。"
+  - "各類型召回率：護照 {metric}，駕照 {metric}。"
+  - "$ git shortlog -sn\n    {count}  {full}"
+  - "{\"name\": \"{service}\", \"負責人\": \"{full}\"}"
+
+zh-Hans:
+  - "Set-Cookie: {lang_cookie}; Path=/"
+  - "语言 {locale} 已翻译完成，还剩 3 句。"
+  - "字段 {code_id} 由系统写入，用户不能修改。"
+  - "各类型召回率：护照 {metric}，驾照 {metric}。"
+  - "$ git shortlog -sn\n    {count}  {full}"
+  - "{\"name\": \"{service}\", \"负责人\": \"{full}\"}"

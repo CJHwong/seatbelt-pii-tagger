@@ -392,6 +392,15 @@ datasets:
       household_no: household_no
       ignore: ignore
 
+  synthetic/field-contrast:  # scripts/field_contrast.py writes final types; identity map
+    include: true
+    languages: null
+    keep_chinese: true
+    labels:
+      person: person
+      username: username
+      secret: secret
+
   synthetic/digit-contrast:  # scripts/digit_contrast.py writes final types; identity map
     include: true
     languages: null
