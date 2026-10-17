@@ -31,7 +31,16 @@ import yaml
 from pyarrow import parquet
 from transformers import BertConfig, BertForTokenClassification, PreTrainedTokenizerFast
 
-from augment import LONE_TOOLS, PLAIN_SWAP_WORDS, SWAP_WORDS, WIDE_LONE_TOOLS, augmented, lone_named, swapped, tool_lined
+from augment import (
+    LONE_TOOLS,
+    PLAIN_SWAP_WORDS,
+    SWAP_WORDS,
+    WIDE_LONE_TOOLS,
+    augmented,
+    lone_named,
+    swapped,
+    tool_lined,
+)
 from ema import WeightAverage
 from run_lib import (
     bench_gold,
@@ -275,7 +284,20 @@ def distill_loss(student_logits: torch.Tensor, teachers: list, batch: dict) -> t
 def train(model, tokenizer, rows: list[dict], labels: list[str], settings: argparse.Namespace, run_dir: Path) -> dict:
     steps, lr = settings.steps, settings.lr
     shares = dict(parse_share(value) for value in settings.source_share)
-    stream = batch_stream(tokenizer, rows, labels, settings.batch, settings.seed, settings.augment, shares, settings.swap_names, settings.lone_names, swap_words_of(settings), settings.lone_tools, tool_words_of(settings))
+    stream = batch_stream(
+        tokenizer,
+        rows,
+        labels,
+        settings.batch,
+        settings.seed,
+        settings.augment,
+        shares,
+        settings.swap_names,
+        settings.lone_names,
+        swap_words_of(settings),
+        settings.lone_tools,
+        tool_words_of(settings),
+    )
     late_step = int(steps * settings.late_from) if settings.late_share else None
     if settings.probe_steps:
         probe_head(model, stream, tokenizer.pad_token_id, settings.probe_steps, settings.bf16)
@@ -290,7 +312,18 @@ def train(model, tokenizer, rows: list[dict], labels: list[str], settings: argpa
             if step == late_step:  # domain upsampling at the end of training (Blakeney et al. 2024)
                 late = shares | dict(parse_share(value) for value in settings.late_share)
                 stream = batch_stream(
-                    tokenizer, rows, labels, settings.batch, settings.seed + 2, settings.augment, late, settings.swap_names, settings.lone_names, swap_words_of(settings), settings.lone_tools, tool_words_of(settings)
+                    tokenizer,
+                    rows,
+                    labels,
+                    settings.batch,
+                    settings.seed + 2,
+                    settings.augment,
+                    late,
+                    settings.swap_names,
+                    settings.lone_names,
+                    swap_words_of(settings),
+                    settings.lone_tools,
+                    tool_words_of(settings),
                 )
             for group in optimizer.param_groups:
                 group["lr"] = learning_rate_at(step, steps, lr)
