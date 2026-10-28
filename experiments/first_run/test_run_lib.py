@@ -3,6 +3,7 @@ from run_lib import (
     drop_name_repeats,
     drop_overlapping,
     is_birth_date,
+    layer_scale,
     length_batches,
     mask_ignored,
     per_type_counts,
@@ -85,3 +86,17 @@ def test_length_batches_groups_similar_lengths_and_keeps_every_row():
     batches = length_batches(lengths, 4, random.Random(0))
     assert sorted(index for batch in batches for index in batch) == list(range(8))
     assert sorted(sorted(lengths[i] for i in batch) for batch in batches) == [[5, 6, 7, 8], [50, 51, 52, 53]]
+
+
+def test_layer_scale_lowers_the_rate_one_factor_per_layer_down():
+    # ULMFiT's discriminative rates: the top layer and the head train at the full rate
+    assert layer_scale("classifier.weight", 6, 0.9) == 1.0
+    assert layer_scale("bert.encoder.layer.5.output.dense.weight", 6, 0.9) == 1.0
+    assert layer_scale("bert.encoder.layer.4.attention.self.query.bias", 6, 0.9) == 0.9
+    assert abs(layer_scale("bert.encoder.layer.0.output.dense.weight", 6, 0.9) - 0.9**5) < 1e-12
+    assert abs(layer_scale("bert.embeddings.word_embeddings.weight", 6, 0.9) - 0.9**6) < 1e-12
+
+
+def test_layer_scale_of_one_keeps_every_rate():
+    for name in ("classifier.bias", "bert.encoder.layer.0.output.dense.weight", "bert.embeddings.LayerNorm.weight"):
+        assert layer_scale(name, 6, 1.0) == 1.0

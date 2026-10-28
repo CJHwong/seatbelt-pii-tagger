@@ -46,6 +46,7 @@ from run_lib import (
     bench_gold,
     drop_name_repeats,
     drop_overlapping,
+    layer_scale,
     length_batches,
     mask_ignored,
     per_type_counts,
@@ -284,6 +285,15 @@ def distill_loss(student_logits: torch.Tensor, teachers: list, batch: dict) -> t
     return DISTILL_TEMPERATURE**2 * divergence
 
 
+def parameter_groups(model, decay: float) -> list[dict]:
+    """One optimizer group per learning-rate scale; a decay of 1 gives one group."""
+    layers = model.config.num_hidden_layers
+    groups: dict[float, list] = defaultdict(list)
+    for name, parameter in model.named_parameters():
+        groups[layer_scale(name, layers, decay)].append(parameter)
+    return [{"params": params, "scale": scale} for scale, params in groups.items()]
+
+
 def train(model, tokenizer, rows: list[dict], labels: list[str], settings: argparse.Namespace, run_dir: Path) -> dict:
     steps, lr = settings.steps, settings.lr
     shares = dict(parse_share(value) for value in settings.source_share)
@@ -305,7 +315,7 @@ def train(model, tokenizer, rows: list[dict], labels: list[str], settings: argpa
     if settings.probe_steps:
         probe_head(model, stream, tokenizer.pad_token_id, settings.probe_steps, settings.bf16)
     teachers = load_teachers(settings.teacher, settings.build)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
+    optimizer = torch.optim.AdamW(parameter_groups(model, settings.layer_decay), lr=lr, weight_decay=0.01)
     warmup = max(1, int(steps * WARMUP_SHARE))
     averages: list[WeightAverage] = []
     model.train()
@@ -329,7 +339,7 @@ def train(model, tokenizer, rows: list[dict], labels: list[str], settings: argpa
                     tool_words_of(settings),
                 )
             for group in optimizer.param_groups:
-                group["lr"] = learning_rate_at(step, steps, lr)
+                group["lr"] = learning_rate_at(step, steps, lr) * group["scale"]
             batch = padded(next(stream), tokenizer.pad_token_id, with_targets=True)
             with torch.autocast(DEVICE.type, dtype=torch.bfloat16, enabled=settings.bf16):
                 output = model(**batch)
@@ -594,6 +604,13 @@ def parse_arguments() -> argparse.Namespace:
         "--teacher", action="append", default=[], metavar="RUN", help="distil from this finished run (repeatable)"
     )
     train_mode.add_argument(
+        "--layer-decay",
+        type=float,
+        default=1.0,
+        metavar="FACTOR",
+        help="learning-rate factor per layer down from the top (ULMFiT discriminative rates); 1 is off",
+    )
+    train_mode.add_argument(
         "--probe-steps", type=int, default=0, metavar="N", help="first train only the head for N steps (LP-FT)"
     )
     train_mode.add_argument(
@@ -641,6 +658,7 @@ def main() -> None:
         "lone_tools": arguments.lone_tools,
         "lone_tools_wide": arguments.lone_tools_wide,
         "probe_steps": arguments.probe_steps,
+        "layer_decay": arguments.layer_decay,
         "teachers": arguments.teacher,
         "source_share": arguments.source_share,
         "late_share": arguments.late_share,

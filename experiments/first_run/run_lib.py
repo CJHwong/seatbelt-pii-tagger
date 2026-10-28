@@ -103,6 +103,19 @@ def script_bucket(script: str) -> str:
     return {"latin": "latin", "zh-Hant": "zh-Hant"}.get(script, "zh-Hans")
 
 
+LAYER = re.compile(r"\.encoder\.layer\.(\d+)\.")
+
+
+def layer_scale(name: str, layers: int, decay: float) -> float:
+    """The learning-rate multiplier of one parameter: discriminative rates (ULMFiT,
+    Howard and Ruder 2018). The head and the top layer get 1, each layer below one more
+    factor of decay, and the embeddings one factor below the bottom layer."""
+    if ".embeddings." in name:
+        return decay**layers
+    match = LAYER.search(name)
+    return decay ** (layers - 1 - int(match.group(1))) if match else 1.0
+
+
 def length_batches(lengths: list[int], batch_size: int, picker) -> list[list[int]]:
     """Cut indices into batches of similar length, in random batch order.
 
