@@ -52,3 +52,11 @@ def test_rows_with_ids_without_and_mixed_all_occur():
         mixed = [row for row in with_id if len(DIGIT_RUN.findall(row["text"])) > len(row["spans"])]
         assert 0.3 * len(rows) < len(with_id) < 0.8 * len(rows), language
         assert len(mixed) > 0.2 * len(rows), language
+
+
+def test_an_account_and_a_key_share_some_windows():
+    """The model dropped an account number when a key line followed it in one window."""
+    for language, items in load_templates().items():
+        rows = generate(language, items, ROWS, random.Random(5))
+        both = [row for row in rows if {"account_number", "secret"} <= {span["label"] for span in row["spans"]}]
+        assert both, language

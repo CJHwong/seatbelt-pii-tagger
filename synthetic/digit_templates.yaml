@@ -2,7 +2,7 @@
 # another. Read by scripts/digit_contrast.py. Syntax is in scripts/synth_lib.py:
 #   [a|b]   pick one variant       {slot}   fill a slot
 # No literal square brackets: synth_lib reads them as variants.
-# Labelled slots (PII): ssn tw_id cn_id passport driver_license bank_account card
+# Labelled slots (PII): ssn tw_id cn_id passport driver_license bank_account card api_key
 # Unlabelled slots (not PII, per the guideline): order invoice tracking booking ticket epoch run_id bytes pid
 # A third of the templates hold only business numbers, a third mix both, a third hold IDs.
 # Template text holds no digit run of 5 or more; every long number comes from a slot.
@@ -48,6 +48,10 @@ en:
   - "Aadhaar {aadhaar} linked to account {bank_account}."
   - "Transfer to IBAN {iban}, reference {invoice}."
   - "SIN on file: {sin}. Employee number: {employee}."
+  # an account line and a key line in one window
+  - "Routing number: {bank_account}\napi_key = {api_key}"
+  - "account {bank_account}\nAuthorization: Bearer {api_key}"
+  - "IBAN {iban}\nSTRIPE_KEY={api_key}\norder {order}"
 
 zh-Hant:
   # 商業與系統編號
@@ -67,6 +71,7 @@ zh-Hant:
   - "護照號碼：{passport}，下個月到期。"
   - "銀行帳號 {bank_account}，請勿外流。"
   - "駕照號碼 {driver_license} 已登記。"
+  - "銀行帳號：{bank_account}\nAPI 金鑰：{api_key}"
 
 zh-Hans:
   # 商业与系统编号
@@ -86,3 +91,4 @@ zh-Hans:
   - "护照号码：{passport}，下个月到期。"
   - "银行账号 {bank_account}，请勿外传。"
   - "驾驶证号 {driver_license} 已登记。"
+  - "银行账号：{bank_account}\nAPI 密钥：{api_key}"

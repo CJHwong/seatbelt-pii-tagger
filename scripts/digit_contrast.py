@@ -32,7 +32,7 @@ from synth_lib import Slot, check_templates, render
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "synthetic" / "digit_contrast"
 LANGUAGES = {"en": "latin", "zh-Hant": "zh-Hant", "zh-Hans": "zh-Hans"}
-LABELS = {"national_id", "passport", "driver_license", "account_number"}
+LABELS = {"national_id", "passport", "driver_license", "account_number", "secret"}
 _FAKERS = {locale: Faker(locale) for locale in ("en_US", "zh_CN", "en_GB", "de_DE")}
 
 
@@ -141,6 +141,12 @@ def card(picker: random.Random) -> str:
 # Business and system numbers, unlabelled. The lengths overlap the IDs on purpose.
 
 
+def api_key(picker: random.Random) -> str:
+    """A key after a key word, on the line below an account number: the model dropped the
+    account when the two shared a window."""
+    return "".join(picker.choice(string.ascii_letters + string.digits) for _ in range(32))
+
+
 def order_no(picker: random.Random) -> str:
     return lead_digits(picker, picker.choice([8, 9, 10, 11, 12]))
 
@@ -187,6 +193,7 @@ SLOTS = {
     "iban": Slot("account_number", iban),
     "bank_account": Slot("account_number", bank_account),
     "card": Slot("account_number", card),
+    "api_key": Slot("secret", api_key),
     "order": Slot(None, order_no),
     "invoice": Slot(None, order_no),
     "tracking": Slot(None, tracking_no),
